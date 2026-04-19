@@ -1,69 +1,165 @@
 # HR Workflow Designer
 
-A React + React Flow prototype for visually designing, configuring, validating, importing/exporting, and simulating HR workflows such as onboarding, leave approval, and document verification.
+This is a small web app where an HR admin can build a workflow by dragging boxes onto a canvas and connecting them with lines.
 
-## Run Locally
+Think of it like making a flowchart:
+
+```text
+Start -> Collect Documents -> Manager Approval -> Send Email -> End
+```
+
+The app is built with **React**, **TypeScript**, **Vite**, and **React Flow**.
+
+## What You Can Do
+
+- Drag workflow steps from the left sidebar onto the canvas.
+- Connect steps with arrows.
+- Click a step to edit its details on the right side.
+- Test the workflow in the sandbox panel.
+- See validation errors if the workflow is broken.
+- Export the workflow as JSON.
+- Import a saved workflow JSON file.
+- Use undo, redo, zoom controls, mini-map, and auto-layout.
+
+## Node Types
+
+The app has 5 kinds of workflow steps:
+
+| Node | What It Means |
+| --- | --- |
+| Start | Where the workflow begins |
+| Task | A human task, like collecting documents |
+| Approval | Someone approves something, like a manager |
+| Automated Step | The system does something, like sending an email |
+| End | Where the workflow finishes |
+
+## How To Run This Project
+
+First, make sure Node.js is installed on your computer.
+
+Then open this folder in a terminal and run:
 
 ```bash
 npm install
+```
+
+This downloads the project packages.
+
+After that, run:
+
+```bash
 npm run dev
 ```
 
-## Build
+You will see a local website link, usually:
+
+```text
+http://127.0.0.1:5173/
+```
+
+Open that link in your browser.
+
+## How To Build The Project
+
+To check that the project is ready for production, run:
 
 ```bash
 npm run build
 ```
 
-## What Is Included
+If it finishes without errors, the project builds correctly.
 
-- React 19 + Vite + TypeScript application
-- React Flow canvas with custom Start, Task, Approval, Automated Step, and End nodes
-- Drag-and-drop node templates from the sidebar
-- Configurable node form panel with controlled inputs
-- Dynamic automation parameter fields powered by a mock `GET /automations` API
-- Mock `POST /simulate` workflow execution
-- Workflow validation for missing connections, Start/End constraints, required task titles, and cycles
-- Visual validation state on nodes
-- Test sandbox panel with serialized graph JSON and execution timeline
-- Export/import workflow JSON
-- Mini-map, zoom controls, basic auto-layout, undo/redo
+## How To Use The App
 
-## Architecture
+1. Look at the left sidebar.
+2. Drag a node, like `Task`, onto the canvas.
+3. Connect nodes by dragging from one small dot to another small dot.
+4. Click any node to open its edit form.
+5. Change the title, assignee, approval role, automation action, or other fields.
+6. Click `Test Workflow` to open the sandbox.
+7. Run the simulation to see the workflow step-by-step.
+
+## What The Sandbox Does
+
+The sandbox checks the workflow and then pretends to run it.
+
+It shows:
+
+- The full workflow JSON.
+- Validation problems, if something is missing.
+- A step-by-step execution log if the workflow is valid.
+
+Example problems it can catch:
+
+- There is no Start node.
+- There is no End node.
+- A node is not connected.
+- The workflow has a cycle.
+- A required Task title is missing.
+
+## Folder Guide
+
+Here is what the main folders mean:
 
 ```text
 src/
-  api/                 mock API layer for automations and simulation
-  components/          canvas-adjacent UI, forms, panels, custom node card
-  data/                node templates and seeded sample workflow
-  hooks/               reusable data hooks
-  types/               workflow node, edge, API, and simulation types
-  utils/               graph validation logic
+  api/          fake API calls live here
+  components/   React UI pieces live here
+  data/         starter workflow and node templates live here
+  hooks/        reusable React logic lives here
+  types/        TypeScript types live here
+  utils/        validation logic lives here
 ```
 
-The app keeps workflow state in `App.tsx` as React Flow nodes and edges. Node-specific data is modeled as a discriminated TypeScript union in `src/types/workflow.ts`, which keeps edit forms type-aware and makes adding future node types straightforward.
+## Important Files
 
-The form panel is intentionally separated from React Flow nodes. Nodes focus on canvas rendering, while `NodeFormPanel` owns configuration behavior. This makes each area easier to extend independently.
+| File | What It Does |
+| --- | --- |
+| `src/App.tsx` | Main app logic and React Flow canvas |
+| `src/components/NodeFormPanel.tsx` | The form shown when you click a node |
+| `src/components/WorkflowNodeCard.tsx` | The custom node design on the canvas |
+| `src/api/mockWorkflowApi.ts` | Fake API for automations and simulation |
+| `src/utils/validation.ts` | Checks if the workflow is valid |
+| `src/data/nodeTemplates.ts` | Defines the available node templates |
+| `src/types/workflow.ts` | TypeScript shapes for nodes, edges, and API data |
 
-## Mock API Design
+## Mock API
 
-The exercise does not require backend persistence, so the mock API is implemented as async local functions in `src/api/mockWorkflowApi.ts`.
+There is no real backend server. The app uses fake API functions so the prototype works by itself.
 
-- `getAutomations()` represents `GET /automations`
-- `simulateWorkflow()` represents `POST /simulate`
+The fake API supports:
 
-Both functions include a small delay to make UI loading and sandbox behavior feel realistic while remaining easy to test and replace with MSW, JSON Server, or a real API later.
+```text
+GET /automations
+```
 
-## Validation Assumptions
+This gives automation options like:
 
-- A valid workflow has exactly one Start node.
-- A valid workflow has at least one End node.
-- Start nodes cannot have incoming edges.
-- Every non-Start node needs an incoming edge.
-- Every non-End node needs an outgoing edge.
-- Cycles are invalid for the simulation sandbox.
-- Task title and automation action are required.
+```json
+[
+  { "id": "send_email", "label": "Send Email", "params": ["to", "subject"] },
+  { "id": "generate_doc", "label": "Generate Document", "params": ["template", "recipient"] }
+]
+```
 
-## Design Notes
+And:
 
-The UI uses the provided references as inspiration: a light dotted canvas, compact node cards, muted side panels, visible workflow status, and right-side configuration/simulation panels. The implementation prioritizes a working designer over marketing screens or static mockups.
+```text
+POST /simulate
+```
+
+This accepts the workflow JSON and returns a fake execution result.
+
+## Design Choices
+
+- React Flow is used because it is good for draggable node-based editors.
+- TypeScript is used so node data is easier to understand and safer to change.
+- Node forms are separate from canvas nodes so the code stays clean.
+- The mock API is local because this prototype does not need a backend.
+- Validation is kept in one file so workflow rules are easy to find.
+
+## Project Status
+
+This is a working prototype for the HR Workflow Designer case study.
+
+It is ready to run locally, review, and publish on GitHub.
