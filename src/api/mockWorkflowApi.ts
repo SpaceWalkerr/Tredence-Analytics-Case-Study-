@@ -39,8 +39,8 @@ export async function simulateWorkflow(payload: {
     };
   }
 
-  const orderedNodes = topologicalWalk(payload.nodes, payload.edges, payload.approvalOutcome ?? 'approved');
-  const steps: SimulationStep[] = orderedNodes.map(({ node, via }, index) => ({
+  const walk = topologicalWalk(payload.nodes, payload.edges, payload.approvalOutcome ?? 'approved');
+  const steps: SimulationStep[] = walk.ordered.map(({ node, via }, index) => ({
     nodeId: node.id,
     nodeType: node.data.type,
     title: node.data.label,
@@ -51,12 +51,23 @@ export async function simulateWorkflow(payload: {
     chosenPath: Boolean(via?.data?.condition && via.data.condition !== 'standard'),
     detail: describeStep(node, index + 1, via),
   }));
+  const skippedSteps: SimulationStep[] = walk.skipped.map(({ node, via }) => ({
+    nodeId: node.id,
+    nodeType: node.data.type,
+    title: node.data.label,
+    status: 'skipped',
+    owner: ownerFor(node),
+    durationMinutes: 0,
+    pathLabel: via?.data?.label ?? String(via?.label ?? ''),
+    detail: `Skipped because "${via?.data?.label ?? via?.label ?? 'this path'}" was not the selected approval outcome.`,
+  }));
 
   return {
     ok: true,
     runId: `sim_${Date.now()}`,
     errors: [],
     steps,
+    skippedSteps,
     summary: {
       totalSteps: steps.length,
       completedSteps: steps.filter((step) => step.status === 'completed').length,
@@ -76,6 +87,7 @@ function topologicalWalk(nodes: WorkflowNode[], edges: WorkflowEdge[], approvalO
   const start = nodes.find((node) => node.data.type === 'start') ?? nodes[0];
   const visited = new Set<string>();
   const ordered: Array<{ node: WorkflowNode; via?: WorkflowEdge }> = [];
+  const skipped: Array<{ node: WorkflowNode; via?: WorkflowEdge }> = [];
   const queue: Array<{ id: string; via?: WorkflowEdge }> = start ? [{ id: start.id }] : [];
 
   while (queue.length > 0) {
@@ -88,10 +100,19 @@ function topologicalWalk(nodes: WorkflowNode[], edges: WorkflowEdge[], approvalO
 
     const nextEdges = outgoing.get(id) ?? [];
     const chosenEdges = node.data.type === 'approval' ? chooseApprovalPath(nextEdges, approvalOutcome) : nextEdges;
+    if (node.data.type === 'approval') {
+      const chosenIds = new Set(chosenEdges.map((edge) => edge.id));
+      nextEdges
+        .filter((edge) => edge.data?.condition && edge.data.condition !== 'standard' && !chosenIds.has(edge.id))
+        .forEach((edge) => {
+          const skippedNode = byId.get(edge.target);
+          if (skippedNode) skipped.push({ node: skippedNode, via: edge });
+        });
+    }
     queue.push(...chosenEdges.map((edge) => ({ id: edge.target, via: edge })));
   }
 
-  return ordered;
+  return { ordered, skipped };
 }
 
 function chooseApprovalPath(edges: WorkflowEdge[], approvalOutcome: ApprovalOutcome) {

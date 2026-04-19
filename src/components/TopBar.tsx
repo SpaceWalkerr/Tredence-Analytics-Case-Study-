@@ -1,4 +1,4 @@
-import { ArrowLeft, Database, Redo2, RotateCcw, Trash2, Undo2, Wand2 } from 'lucide-react';
+import { ArrowLeft, Database, Redo2, RotateCcw, Save, Trash2, Undo2, Wand2 } from 'lucide-react';
 
 type Props = {
   canRedo: boolean;
@@ -11,9 +11,12 @@ type Props = {
   onRedo: () => void;
   onReset: () => void;
   onRun: () => void;
+  onSave: () => void;
   onUndo: () => void;
   saveStatus: 'idle' | 'saving' | 'saved';
   savedAt?: string;
+  workflowName: string;
+  onWorkflowNameChange: (name: string) => void;
 };
 
 export function TopBar({
@@ -27,9 +30,12 @@ export function TopBar({
   onRedo,
   onReset,
   onRun,
+  onSave,
   onUndo,
   saveStatus,
   savedAt,
+  workflowName,
+  onWorkflowNameChange,
 }: Props) {
   const saveText = saveStatus === 'saving' ? 'Saving...' : savedAt ? `Saved at ${savedAt}` : 'Not saved';
 
@@ -41,7 +47,14 @@ export function TopBar({
           Back to Dashboard
         </button>
         <div>
-          <h1>SpaceWalker Workflow Studio</h1>
+          <label className="workflow-name-field">
+            <span>Workflow</span>
+            <input
+              value={workflowName}
+              onChange={(event) => onWorkflowNameChange(event.target.value)}
+              placeholder="Untitled Workflow"
+            />
+          </label>
           <p>
             {nodeCount} steps ·{' '}
             {errors.length ? `${errors.length} validation issue${errors.length === 1 ? '' : 's'}` : 'Ready to simulate'}
@@ -63,6 +76,10 @@ export function TopBar({
         <button className="ghost-button" type="button" onClick={onReset}>
           <Database size={16} />
           Reset
+        </button>
+        <button className="ghost-button" type="button" onClick={onSave}>
+          <Save size={16} />
+          Save Workflow
         </button>
         <button className="icon-button" type="button" onClick={onClearSaved} title="Clear saved workflow">
           <Trash2 size={16} />

@@ -79,30 +79,19 @@ export function SandboxPanel({
             </div>
           ) : null}
           {result.ok ? (
-            result.steps.map((step) => (
-              <div
-                className={[
-                  'timeline-row',
-                  `timeline-row--${step.status}`,
-                  step.chosenPath ? 'timeline-row--chosen' : '',
-                ].join(' ')}
-                key={`${result.runId}-${step.nodeId}-${step.pathLabel ?? 'step'}`}
-              >
-                <span aria-hidden="true" />
-                <div>
-                  <strong>
-                    {step.title}
-                    {step.pathLabel ? <em>{step.pathLabel}</em> : null}
-                  </strong>
-                  <div className="step-meta">
-                    <span>{step.owner}</span>
-                    <span>{step.durationMinutes} min</span>
-                    <span>{step.status}</span>
-                  </div>
-                  <p>{step.detail}</p>
+            <>
+              {result.steps.map((step) => (
+                <TimelineStep key={`${result.runId}-${step.nodeId}-${step.pathLabel ?? 'step'}`} step={step} />
+              ))}
+              {result.skippedSteps?.length ? (
+                <div className="skipped-branch-box">
+                  <p className="section-label">Skipped Branches</p>
+                  {result.skippedSteps.map((step) => (
+                    <TimelineStep key={`${result.runId}-skipped-${step.nodeId}-${step.pathLabel ?? 'step'}`} step={step} />
+                  ))}
                 </div>
-              </div>
-            ))
+              ) : null}
+            </>
           ) : (
             <p className="empty-copy">Simulation blocked until validation issues are fixed.</p>
           )}
@@ -113,6 +102,32 @@ export function SandboxPanel({
         <p className="section-label">Serialized Graph</p>
         <pre>{serialized}</pre>
       </section>
+    </div>
+  );
+}
+
+function TimelineStep({ step }: { step: SimulationResult['steps'][number] }) {
+  return (
+    <div
+      className={[
+        'timeline-row',
+        `timeline-row--${step.status}`,
+        step.chosenPath ? 'timeline-row--chosen' : '',
+      ].join(' ')}
+    >
+      <span aria-hidden="true" />
+      <div>
+        <strong>
+          {step.title}
+          {step.pathLabel ? <em>{step.pathLabel}</em> : null}
+        </strong>
+        <div className="step-meta">
+          <span>{step.owner}</span>
+          <span>{step.durationMinutes} min</span>
+          <span>{step.status}</span>
+        </div>
+        <p>{step.detail}</p>
+      </div>
     </div>
   );
 }

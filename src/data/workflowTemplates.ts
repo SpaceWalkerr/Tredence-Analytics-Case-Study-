@@ -82,7 +82,10 @@ const makeWorkflow = (
   nodes: nodes.map((node) => ({
     id: `${id}-${node.id}`,
     type: node.type,
-    position: { x: node.x, y: node.y },
+    position: {
+      x: Math.round(node.x * 1.22),
+      y: Math.round(node.y * 1.18),
+    },
     data: node.data,
   })),
   edges: edgePairs.map(([source, target, label]) => ({
@@ -91,6 +94,7 @@ const makeWorkflow = (
     target: `${id}-${target}`,
     animated: true,
     label,
+    type: 'workflow',
     data: { label, condition: conditionFromLabel(label) },
   })),
 });

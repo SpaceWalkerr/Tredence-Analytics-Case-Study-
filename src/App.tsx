@@ -12,6 +12,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
   type EdgeChange,
+  type EdgeTypes,
   type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -22,10 +23,12 @@ import { EdgeFormPanel } from './components/EdgeFormPanel';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { NodeFormPanel } from './components/NodeFormPanel';
 import { SandboxPanel } from './components/SandboxPanel';
-import { Sidebar } from './components/Sidebar';
+import { Sidebar, type SidebarPageId } from './components/Sidebar';
+import { SimplePage } from './components/SimplePage';
 import { TopBar } from './components/TopBar';
 import { ValidationPanel, type ValidationIssue } from './components/ValidationPanel';
 import { WorkflowDashboard } from './components/WorkflowDashboard';
+import { WorkflowEdge as WorkflowEdgeView } from './components/WorkflowEdge';
 import { WorkflowNodeCard } from './components/WorkflowNodeCard';
 import { templateByType } from './data/nodeTemplates';
 import { cloneWorkflow, defaultWorkflowTemplate, workflowTemplates } from './data/workflowTemplates';
@@ -42,22 +45,27 @@ const nodeTypes: NodeTypes = {
   end: WorkflowNodeCard,
 };
 
-const STORAGE_KEY = 'peopleops-workflow-designer';
+const edgeTypes: EdgeTypes = {
+  workflow: WorkflowEdgeView,
+};
 
-const initialWorkflow = () => {
+const STORAGE_KEY = 'peopleops-workflow-designer';
+type AppView = 'dashboard' | 'designer' | Exclude<SidebarPageId, 'dashboard'>;
+
+const initialWorkflow = (): { nodes: WorkflowNode[]; edges: WorkflowEdge[]; name?: string } => {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved) as SerializedWorkflow;
       if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
-        return { nodes: parsed.nodes, edges: parsed.edges };
+        return { nodes: parsed.nodes, edges: parsed.edges, name: parsed.name };
       }
     }
   } catch {
     window.localStorage.removeItem(STORAGE_KEY);
   }
 
-  return cloneWorkflow(defaultWorkflowTemplate);
+  return { ...cloneWorkflow(defaultWorkflowTemplate), name: defaultWorkflowTemplate.name };
 };
 
 const hasSavedWorkflow = () => {
@@ -80,9 +88,10 @@ function WorkflowDesigner() {
   const { screenToFlowPosition, setCenter } = useReactFlow();
   const { automations } = useAutomations();
   const starter = useMemo(() => initialWorkflow(), []);
-  const [view, setView] = useState<'dashboard' | 'designer'>('dashboard');
+  const [view, setView] = useState<AppView>('dashboard');
   const [nodes, setNodes] = useState<WorkflowNode[]>(starter.nodes);
   const [edges, setEdges] = useState<WorkflowEdge[]>(starter.edges);
+  const [workflowName, setWorkflowName] = useState(starter.name ?? 'Employee Onboarding');
   const [selectedNodeId, setSelectedNodeId] = useState<string>();
   const [selectedEdgeId, setSelectedEdgeId] = useState<string>();
   const [history, setHistory] = useState<Array<{ nodes: WorkflowNode[]; edges: WorkflowEdge[] }>>([]);
@@ -101,7 +110,7 @@ function WorkflowDesigner() {
   useEffect(() => {
     if (view !== 'designer') return;
     setSaveStatus('saving');
-    const payload: SerializedWorkflow = { nodes, edges, exportedAt: new Date().toISOString() };
+    const payload: SerializedWorkflow = { nodes, edges, name: workflowName, exportedAt: new Date().toISOString() };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
@@ -110,7 +119,7 @@ function WorkflowDesigner() {
     }, 450);
 
     return () => window.clearTimeout(saveTimer.current);
-  }, [nodes, edges, view]);
+  }, [nodes, edges, view, workflowName]);
 
   const validation = useMemo(() => validateWorkflow(nodes, edges), [nodes, edges]);
   const nodesWithValidation = useMemo(
@@ -164,6 +173,7 @@ function WorkflowDesigner() {
           ...connection,
           animated: true,
           label,
+          type: 'workflow',
           data: { label, condition: label ? 'approved' : 'standard' },
         },
         edges,
@@ -192,6 +202,23 @@ function WorkflowDesigner() {
     },
     [commit, edges, nodes, screenToFlowPosition],
   );
+
+  const addNodeFromPalette = (type: WorkflowNodeType) => {
+    const template = templateByType[type];
+    if (!template) return;
+    const node: WorkflowNode = {
+      id: `${type}-${crypto.randomUUID()}`,
+      type,
+      position: {
+        x: 120 + (nodes.length % 4) * 280,
+        y: 160 + Math.floor(nodes.length / 4) * 160,
+      },
+      data: template.createData(),
+    };
+    commit([...nodes, node], edges);
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(undefined);
+  };
 
   const updateNode = (nodeId: string, data: WorkflowNodeData) => {
     const current = nodes.find((node) => node.id === nodeId);
@@ -277,6 +304,7 @@ function WorkflowDesigner() {
     await showLoading(`Loading ${template.name}...`);
     const workflow = cloneWorkflow(template);
     commit(workflow.nodes, workflow.edges);
+    setWorkflowName(template.name);
     setSelectedNodeId(undefined);
     setSelectedEdgeId(undefined);
     setSimulation(undefined);
@@ -299,6 +327,7 @@ function WorkflowDesigner() {
     await showLoading('Loading sample workflow...');
     const workflow = cloneWorkflow(defaultWorkflowTemplate);
     commit(workflow.nodes, workflow.edges);
+    setWorkflowName(defaultWorkflowTemplate.name);
     setSelectedNodeId(undefined);
     setSelectedEdgeId(undefined);
     setView('designer');
@@ -307,6 +336,7 @@ function WorkflowDesigner() {
   const createBlankWorkflow = async () => {
     await showLoading('Loading blank workflow...');
     commit([], []);
+    setWorkflowName('Untitled Workflow');
     setSelectedNodeId(undefined);
     setSelectedEdgeId(undefined);
     setSimulation(undefined);
@@ -324,6 +354,16 @@ function WorkflowDesigner() {
     setSaveStatus('idle');
   };
 
+  const navigateSidebar = (page: SidebarPageId) => {
+    setSelectedNodeId(undefined);
+    setSelectedEdgeId(undefined);
+    if (page === 'dashboard') {
+      setView('dashboard');
+      return;
+    }
+    setView(page);
+  };
+
   const selectValidationIssue = (issue: ValidationIssue) => {
     if (!issue.nodeId) return;
     const node = nodes.find((item) => item.id === issue.nodeId);
@@ -334,12 +374,12 @@ function WorkflowDesigner() {
   };
 
   const exportWorkflow = () => {
-    const payload: SerializedWorkflow = { nodes, edges, exportedAt: new Date().toISOString() };
+    const payload: SerializedWorkflow = { nodes, edges, name: workflowName, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'hr-workflow.json';
+    anchor.download = `${slugify(workflowName || 'hr-workflow')}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -350,6 +390,7 @@ function WorkflowDesigner() {
     if (payload.nodes && payload.edges) {
       await showLoading('Loading imported workflow...');
       commit(payload.nodes, payload.edges);
+      setWorkflowName(payload.name ?? file.name.replace(/\.json$/i, '') ?? 'Imported Workflow');
       setSelectedNodeId(undefined);
       setSelectedEdgeId(undefined);
       setView('designer');
@@ -386,6 +427,36 @@ function WorkflowDesigner() {
     );
   }
 
+  if (view !== 'designer') {
+    return (
+      <div className="app-shell app-shell--page">
+        {loadingMessage ? <LoadingOverlay message={loadingMessage} /> : null}
+        <Sidebar
+          activePage={view}
+          onExport={exportWorkflow}
+          onImport={importWorkflow}
+          onNavigate={navigateSidebar}
+        />
+        <SimplePage page={view} />
+        <aside className="inspector inspector--simple">
+          <div className="overview-panel">
+            <div className="overview-header">
+              <div>
+                <h2>Page Overview</h2>
+                <p>Simple module preview</p>
+              </div>
+              <span aria-hidden="true">×</span>
+            </div>
+            <div className="coverage-card">
+              <strong>{view.charAt(0).toUpperCase() + view.slice(1)}</strong>
+              <p>This page is ready for future expansion.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       {loadingMessage ? <LoadingOverlay message={loadingMessage} /> : null}
@@ -405,7 +476,12 @@ function WorkflowDesigner() {
           onConfirm={confirmResetWorkflow}
         />
       ) : null}
-      <Sidebar onExport={exportWorkflow} onImport={importWorkflow} />
+      <Sidebar
+        activePage="workflows"
+        onExport={exportWorkflow}
+        onImport={importWorkflow}
+        onNavigate={navigateSidebar}
+      />
       <main className="designer">
         <TopBar
           canRedo={future.length > 0}
@@ -418,14 +494,18 @@ function WorkflowDesigner() {
           onRedo={redo}
           onReset={resetWorkflow}
           onRun={runSimulation}
+          onSave={exportWorkflow}
           onUndo={undo}
           saveStatus={saveStatus}
           savedAt={savedAt}
+          workflowName={workflowName}
+          onWorkflowNameChange={setWorkflowName}
         />
         <section className="canvas-wrap">
           <ReactFlow
             nodes={nodesWithValidation}
             edges={edges}
+            edgeTypes={edgeTypes}
             nodeTypes={nodeTypes}
             onConnect={onConnect}
             onDrop={onDrop}
@@ -448,13 +528,18 @@ function WorkflowDesigner() {
               setSelectedEdgeId(undefined);
             }}
             fitView
+            fitViewOptions={{ padding: 0.28 }}
           >
             <Background color="#cad4dd" gap={20} size={1.2} variant={BackgroundVariant.Dots} />
             <MiniMap pannable zoomable position="top-right" />
             <Controls />
           </ReactFlow>
           <ValidationPanel issues={validationIssues} onIssueClick={selectValidationIssue} />
-          <CanvasTemplateTray onCreateBlank={createBlankWorkflow} onLoadTemplate={loadTemplate} />
+          <CanvasTemplateTray
+            onAddNode={addNodeFromPalette}
+            onCreateBlank={createBlankWorkflow}
+            onLoadTemplate={loadTemplate}
+          />
         </section>
       </main>
       <aside className="inspector">
@@ -524,6 +609,14 @@ function WorkflowDesigner() {
       />
     </div>
   );
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'hr-workflow';
 }
 
 function buildValidationIssues(validation: ReturnType<typeof validateWorkflow>): ValidationIssue[] {

@@ -16,6 +16,7 @@ export function EdgeFormPanel({ edge, onDelete, onUpdate }: Props) {
     onUpdate(edge.id, {
       ...edge,
       label: nextLabel,
+      type: 'workflow',
       data: {
         ...edge.data,
         label: nextLabel,

@@ -4,11 +4,12 @@ import { workflowTemplates } from '../data/workflowTemplates';
 import type { WorkflowNodeType } from '../types/workflow';
 
 type Props = {
+  onAddNode: (type: WorkflowNodeType) => void;
   onCreateBlank: () => void;
   onLoadTemplate: (templateId: string) => void;
 };
 
-export function CanvasTemplateTray({ onCreateBlank, onLoadTemplate }: Props) {
+export function CanvasTemplateTray({ onAddNode, onCreateBlank, onLoadTemplate }: Props) {
   const onDragStart = (event: React.DragEvent, type: WorkflowNodeType) => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
@@ -26,8 +27,10 @@ export function CanvasTemplateTray({ onCreateBlank, onLoadTemplate }: Props) {
                 className="canvas-node-template"
                 draggable
                 key={template.type}
+                onClick={() => onAddNode(template.type)}
                 onDragStart={(event) => onDragStart(event, template.type)}
                 type="button"
+                title={`Add ${template.label} node`}
               >
                 <span style={{ color: template.color }}>
                   <Icon size={16} />

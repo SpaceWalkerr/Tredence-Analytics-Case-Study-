@@ -39,6 +39,72 @@ button:disabled {
   overflow: hidden;
 }
 
+.app-shell--page {
+  background: #f7f9fb;
+}
+
+.simple-page {
+  overflow: auto;
+  padding: 38px;
+}
+
+.simple-page-hero {
+  background: #fff;
+  border: 1px solid #e6edf3;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  padding: 28px;
+}
+
+.simple-page-hero h1 {
+  font-size: 34px;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.simple-page-hero p {
+  color: #667482;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 640px;
+}
+
+.simple-card-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.simple-card {
+  background: #fff;
+  border: 1px solid #e6edf3;
+  border-radius: 8px;
+  min-height: 150px;
+  padding: 18px;
+}
+
+.simple-card span {
+  color: #0f766e;
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 18px;
+}
+
+.simple-card strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.simple-card p {
+  color: #697684;
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .dashboard-screen {
   background: #eef2f6;
   min-height: 100vh;
@@ -443,7 +509,7 @@ button:disabled {
 
 .designer {
   display: grid;
-  grid-template-rows: 62px minmax(0, 1fr);
+  grid-template-rows: 76px minmax(0, 1fr);
   min-width: 0;
 }
 
@@ -452,8 +518,9 @@ button:disabled {
   background: #fff;
   border-bottom: 1px solid #edf1f5;
   display: flex;
+  gap: 16px;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 10px 16px;
   position: relative;
 }
 
@@ -461,7 +528,7 @@ button:disabled {
   align-items: center;
   display: flex;
   gap: 14px;
-  min-width: 0;
+  min-width: 360px;
 }
 
 .back-button {
@@ -482,7 +549,6 @@ button:disabled {
   background: #e0f2f0;
 }
 
-.topbar h1,
 .topbar p,
 .inspector h2,
 .sandbox h2,
@@ -491,26 +557,50 @@ button:disabled {
   margin: 0;
 }
 
-.topbar h1 {
+.workflow-name-field {
+  display: grid;
+  gap: 2px;
+  position: static;
+  text-align: left;
+}
+
+.workflow-name-field span {
+  color: #7b8490;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.workflow-name-field input {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #242b35;
   font-size: 14px;
-  left: 50%;
-  margin: 0;
-  position: absolute;
-  text-align: center;
-  top: 14px;
-  transform: translateX(-50%);
-  white-space: nowrap;
+  font-weight: 800;
+  min-height: 26px;
+  text-align: left;
+  width: min(300px, 30vw);
+}
+
+.workflow-name-field input:focus {
+  background: #fff;
+  border-color: #dce4eb;
+  outline: none;
 }
 
 .topbar p {
   font-size: 12px;
-  left: 50%;
   margin-top: 0;
-  position: absolute;
-  text-align: center;
-  top: 32px;
-  transform: translateX(-50%);
+  position: static;
+  text-align: left;
   white-space: nowrap;
+}
+
+.topbar-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 560px;
 }
 
 .canvas-wrap {
@@ -520,7 +610,7 @@ button:disabled {
 
 .canvas-node-palette {
   left: 18px;
-  max-width: min(620px, calc(100% - 390px));
+  max-width: min(600px, calc(100% - 230px));
   position: absolute;
   top: 18px;
   z-index: 6;
@@ -735,7 +825,7 @@ button:disabled {
   background: #fff;
   border: 1px solid #dde4ea;
   border-radius: 8px;
-  bottom: 180px;
+  bottom: 188px;
   box-shadow: 0 14px 28px rgba(27, 39, 51, 0.08);
   left: 18px;
   max-width: 360px;
@@ -972,6 +1062,56 @@ button:disabled {
   stroke-width: 1;
 }
 
+.react-flow__edge:has(.react-flow__edge-text) .react-flow__edge-text {
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+
+.react-flow__edge:has(.react-flow__edge-text) path {
+  stroke-width: 2.5;
+}
+
+.react-flow__edge-text:has(+ .react-flow__edge-textbg) {
+  fill: #17202a;
+}
+
+.edge-label-pill {
+  border: 1px solid #d8e1e8;
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(23, 32, 42, 0.08);
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 9px;
+  pointer-events: all;
+  position: absolute;
+  white-space: nowrap;
+}
+
+.edge-label-pill--approved {
+  background: #ecfdf5;
+  border-color: #bcebd5;
+  color: #0f9f6e;
+}
+
+.edge-label-pill--rejected {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #d9232f;
+}
+
+.edge-label-pill--needs_correction {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c05621;
+}
+
+.edge-label-pill--standard {
+  background: #f8fafc;
+  border-color: #d8e1e8;
+  color: #344150;
+}
+
 .inspector h2,
 .sandbox h2 {
   font-size: 16px;
@@ -1143,6 +1283,16 @@ button:disabled {
   padding: 8px;
 }
 
+.skipped-branch-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5df;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 10px;
+}
+
 .step-meta {
   display: flex;
   flex-wrap: wrap;
@@ -1208,6 +1358,39 @@ button:disabled {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
+  .designer {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar-main {
+    align-items: flex-start;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .workflow-name-field input {
+    width: min(360px, 48vw);
+  }
+
+  .topbar-actions {
+    justify-content: flex-start;
+    max-width: 100%;
+  }
+
+  .canvas-node-palette {
+    max-width: min(430px, calc(100% - 220px));
+  }
+
+  .react-flow__minimap {
+    height: 96px;
+    width: 140px;
+  }
+
   .inspector {
     border-left: 0;
     border-top: 1px solid #dde4ea;
@@ -1243,6 +1426,40 @@ button:disabled {
   .topbar-actions {
     flex-wrap: wrap;
     justify-content: flex-start;
+  }
+
+  .workflow-name-field input {
+    width: min(280px, 90vw);
+  }
+
+  .canvas-node-palette {
+    left: 10px;
+    max-width: calc(100% - 20px);
+    right: 10px;
+    top: 10px;
+  }
+
+  .canvas-node-list {
+    max-width: 100%;
+  }
+
+  .canvas-workflow-palette {
+    bottom: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  .react-flow__minimap {
+    display: none;
+  }
+
+  .validation-panel {
+    bottom: 174px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  .simple-card-grid {
+    grid-template-columns: 1fr;
   }
 
   .inspector {

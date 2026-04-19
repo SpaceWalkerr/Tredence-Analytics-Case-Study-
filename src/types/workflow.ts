@@ -83,6 +83,7 @@ export type AutomationDefinition = {
 export type SerializedWorkflow = {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  name?: string;
   exportedAt: string;
 };
 
@@ -103,6 +104,7 @@ export type SimulationResult = {
   runId: string;
   errors: string[];
   steps: SimulationStep[];
+  skippedSteps?: SimulationStep[];
   summary?: {
     totalSteps: number;
     completedSteps: number;

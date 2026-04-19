@@ -15,12 +15,30 @@ import {
   Workflow,
 } from 'lucide-react';
 
+export type SidebarPageId =
+  | 'dashboard'
+  | 'compliance'
+  | 'scheduler'
+  | 'analytics'
+  | 'integrations'
+  | 'repository'
+  | 'workflows'
+  | 'members'
+  | 'inbox'
+  | 'messages'
+  | 'settings'
+  | 'help';
+
 type Props = {
+  activePage: SidebarPageId;
+  onNavigate: (page: SidebarPageId) => void;
   onExport: () => void;
   onImport: (file: File) => void;
 };
 
-export function Sidebar({ onExport, onImport }: Props) {
+export function Sidebar({ activePage, onExport, onImport, onNavigate }: Props) {
+  const itemClass = (page: SidebarPageId) => ['nav-item', activePage === page ? 'nav-item--active' : ''].join(' ');
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -33,20 +51,20 @@ export function Sidebar({ onExport, onImport }: Props) {
 
       <section className="nav-section">
         <p className="section-label">General</p>
-        <button className="nav-item nav-item--active" type="button">
+        <button className={itemClass('dashboard')} type="button" onClick={() => onNavigate('dashboard')}>
           <Gauge size={16} />
           Dashboard
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('compliance')} type="button" onClick={() => onNavigate('compliance')}>
           <ShieldCheck size={16} />
           Compliance
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('scheduler')} type="button" onClick={() => onNavigate('scheduler')}>
           <CalendarClock size={16} />
           Scheduler
           <span>11</span>
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('analytics')} type="button" onClick={() => onNavigate('analytics')}>
           <BarChart3 size={16} />
           Analytics
         </button>
@@ -54,16 +72,16 @@ export function Sidebar({ onExport, onImport }: Props) {
 
       <section className="nav-section">
         <p className="section-label">Automation</p>
-        <button className="nav-item" type="button">
+        <button className={itemClass('integrations')} type="button" onClick={() => onNavigate('integrations')}>
           <Link size={16} />
           Integrations
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('repository')} type="button" onClick={() => onNavigate('repository')}>
           <GitBranch size={16} />
           Repository
           <span>7</span>
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('workflows')} type="button" onClick={() => onNavigate('workflows')}>
           <Workflow size={16} />
           Workflows
         </button>
@@ -71,16 +89,16 @@ export function Sidebar({ onExport, onImport }: Props) {
 
       <section className="nav-section">
         <p className="section-label">Resources</p>
-        <button className="nav-item" type="button">
+        <button className={itemClass('members')} type="button" onClick={() => onNavigate('members')}>
           <Users size={16} />
           Members
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('inbox')} type="button" onClick={() => onNavigate('inbox')}>
           <Inbox size={16} />
           Inbox
           <span>13</span>
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('messages')} type="button" onClick={() => onNavigate('messages')}>
           <CheckSquare size={16} />
           Messages
         </button>
@@ -110,11 +128,11 @@ export function Sidebar({ onExport, onImport }: Props) {
       </section>
 
       <div className="sidebar-footer">
-        <button className="nav-item" type="button">
+        <button className={itemClass('settings')} type="button" onClick={() => onNavigate('settings')}>
           <Settings size={16} />
           Settings
         </button>
-        <button className="nav-item" type="button">
+        <button className={itemClass('help')} type="button" onClick={() => onNavigate('help')}>
           <HelpCircle size={16} />
           Help & Support
         </button>

@@ -91,7 +91,7 @@ The tests check the important workflow rules, like missing Start nodes, missing 
 1. Choose a workflow from the dashboard.
 2. Choose `Create From Scratch` for an empty canvas, or pick a ready-made template.
 3. Look at the left sidebar.
-4. Choose another ready-made template, or drag a node like `Task` onto the canvas.
+4. Choose another ready-made template, or click/drag a node like `Task` onto the canvas.
 5. Connect nodes by dragging from one small dot to another small dot.
 6. Click any node to open its edit form.
 7. Click any connection line to edit its label.
@@ -104,7 +104,7 @@ The tests check the important workflow rules, like missing Start nodes, missing 
 
 The app includes one blank workflow option plus these larger HR templates. Each ready-made template has about 12 connected steps, with tasks, approvals, automation, and branching paths:
 
-- Create From Scratch
+- Create From Scratch, which opens an empty canvas where users can click or drag every node type, connect them, configure forms, and export the final workflow as JSON.
 - Employee onboarding
 - Leave approval
 - Document verification
@@ -157,6 +157,7 @@ src/
 | `src/components/EdgeFormPanel.tsx` | The form shown when you click a connection line |
 | `src/components/WorkflowNodeCard.tsx` | The custom node design on the canvas |
 | `src/components/WorkflowDashboard.tsx` | The workflow list screen shown before the editor |
+| `src/components/SimplePage.tsx` | Placeholder pages for sidebar modules |
 | `src/api/mockWorkflowApi.ts` | Fake API for automations and simulation |
 | `src/utils/validation.ts` | Checks if the workflow is valid |
 | `src/data/nodeTemplates.ts` | Defines the available node templates |
@@ -216,6 +217,7 @@ I also added validation messages on the canvas because mistakes are easier to fi
 
 If I had more time, I would improve these parts:
 
+- Expand the sidebar pages into full modules. Right now Compliance, Scheduler, Analytics, Integrations, Repository, Workflows, Members, Inbox, Messages, Settings, and Help are simple placeholder pages. In the future I would add real tables, filters, actions, and connected data for each one.
 - Add better auto-layout for large workflows.
 - Add deeper node version history with rollback.
 - Add a real backend for shared workflow storage.
