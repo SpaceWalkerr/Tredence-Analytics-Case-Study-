@@ -158,6 +158,29 @@ This accepts the workflow JSON and returns a fake execution result.
 - The mock API is local because this prototype does not need a backend.
 - Validation is kept in one file so workflow rules are easy to find.
 
+## Personal Design Decisions
+
+I kept the first screen as the actual workflow editor instead of making a landing page. For this type of assignment, I felt it was more useful if the reviewer could open the project and immediately test the main feature.
+
+I added a sample onboarding workflow by default. An empty canvas can feel confusing at first, so the sample workflow helps show how Start, Task, Approval, Automation, and End nodes are supposed to work together.
+
+I used a right-side edit panel because it keeps the canvas visible while changing node details. This makes it easier to understand how one small form change affects the workflow.
+
+I kept the mock API simple and local. A real backend would take more time, and the main goal here is to show the front-end workflow logic clearly.
+
+I also added validation messages on the canvas because mistakes are easier to fix when they are shown near the actual workflow, not only inside a hidden test result.
+
+## What I Would Improve Next
+
+If I had more time, I would improve these parts:
+
+- Add better auto-layout for large workflows.
+- Add version history for each node.
+- Add labels on edges, like `approved`, `rejected`, or `needs more info`.
+- Add more realistic simulation data for HR workflows.
+- Add tests for validation rules.
+- Save workflows in a backend or browser storage.
+
 ## Project Status
 
 This is a working prototype for the HR Workflow Designer case study.
