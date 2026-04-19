@@ -12,13 +12,7 @@ type Props = {
 
 export function NodeFormPanel({ automations, node, onDelete, onUpdate }: Props) {
   if (!node) {
-    return (
-      <aside className="inspector inspector--empty">
-        <p className="section-label">Node Form Panel</p>
-        <h2>Select a node</h2>
-        <p>Pick a workflow step on the canvas to edit its configuration.</p>
-      </aside>
-    );
+    return null;
   }
 
   const template = templateByType[node.data.type];
@@ -29,7 +23,7 @@ export function NodeFormPanel({ automations, node, onDelete, onUpdate }: Props) 
   };
 
   return (
-    <aside className="inspector">
+    <div>
       <div className="panel-title">
         <span className="template-icon" style={{ color: template.color }}>
           <Icon size={18} />
@@ -50,11 +44,28 @@ export function NodeFormPanel({ automations, node, onDelete, onUpdate }: Props) 
 
       <div className="form-stack">{renderForm(node.data, patch, automations)}</div>
 
+      <section className="history-panel">
+        <p className="section-label">Version History</p>
+        {node.data.versionHistory?.length ? (
+          node.data.versionHistory.map((entry) => (
+            <div className="history-row" key={entry.id}>
+              <strong>{entry.field} changed</strong>
+              <span>
+                {entry.previousValue} → {entry.nextValue}
+              </span>
+              <small>{new Date(entry.changedAt).toLocaleString()}</small>
+            </div>
+          ))
+        ) : (
+          <p className="empty-copy">No changes tracked yet.</p>
+        )}
+      </section>
+
       <button className="danger-button" type="button" onClick={() => onDelete(node.id)}>
         <Trash2 size={16} />
         Delete Node
       </button>
-    </aside>
+    </div>
   );
 }
 

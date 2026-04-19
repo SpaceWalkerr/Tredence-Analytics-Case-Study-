@@ -19,6 +19,10 @@ The app is built with **React**, **TypeScript**, **Vite**, and **React Flow**.
 - See validation errors if the workflow is broken.
 - Export the workflow as JSON.
 - Import a saved workflow JSON file.
+- Load ready-made HR workflow templates.
+- Add labels to connection lines, like `Approved`, `Rejected`, and `Needs correction`.
+- Save the workflow in the browser after refresh.
+- See simple version history for node edits.
 - Use undo, redo, zoom controls, mini-map, and auto-layout.
 
 ## Node Types
@@ -69,15 +73,36 @@ npm run build
 
 If it finishes without errors, the project builds correctly.
 
+## How To Run Tests
+
+To run validation tests, use:
+
+```bash
+npm run test
+```
+
+The tests check the important workflow rules, like missing Start nodes, missing End nodes, broken connections, cycles, and required fields.
+
 ## How To Use The App
 
 1. Look at the left sidebar.
-2. Drag a node, like `Task`, onto the canvas.
+2. Choose a ready-made template, or drag a node like `Task` onto the canvas.
 3. Connect nodes by dragging from one small dot to another small dot.
 4. Click any node to open its edit form.
-5. Change the title, assignee, approval role, automation action, or other fields.
-6. Click `Test Workflow` to open the sandbox.
-7. Run the simulation to see the workflow step-by-step.
+5. Click any connection line to edit its label.
+6. Change the title, assignee, approval role, automation action, or other fields.
+7. Click `Test Workflow` to open the sandbox.
+8. Run the simulation to see the workflow step-by-step.
+
+## Ready-Made Templates
+
+The app includes these HR templates:
+
+- Employee onboarding
+- Leave approval
+- Document verification
+- Asset request
+- Exit process
 
 ## What The Sandbox Does
 
@@ -88,6 +113,11 @@ It shows:
 - The full workflow JSON.
 - Validation problems, if something is missing.
 - A step-by-step execution log if the workflow is valid.
+- Time taken for each step.
+- Who owns each step.
+- Success or waiting status.
+- The conditional path used, like `Approved`.
+- A final summary with total steps and total estimated time.
 
 Example problems it can catch:
 
@@ -117,10 +147,12 @@ src/
 | --- | --- |
 | `src/App.tsx` | Main app logic and React Flow canvas |
 | `src/components/NodeFormPanel.tsx` | The form shown when you click a node |
+| `src/components/EdgeFormPanel.tsx` | The form shown when you click a connection line |
 | `src/components/WorkflowNodeCard.tsx` | The custom node design on the canvas |
 | `src/api/mockWorkflowApi.ts` | Fake API for automations and simulation |
 | `src/utils/validation.ts` | Checks if the workflow is valid |
 | `src/data/nodeTemplates.ts` | Defines the available node templates |
+| `src/data/workflowTemplates.ts` | Defines ready-made HR workflow templates |
 | `src/types/workflow.ts` | TypeScript shapes for nodes, edges, and API data |
 
 ## Mock API
@@ -157,6 +189,8 @@ This accepts the workflow JSON and returns a fake execution result.
 - Node forms are separate from canvas nodes so the code stays clean.
 - The mock API is local because this prototype does not need a backend.
 - Validation is kept in one file so workflow rules are easy to find.
+- Browser storage is used so the workflow stays available after refresh.
+- Edge labels make approval flows feel more like real HR processes.
 
 ## Personal Design Decisions
 
@@ -175,11 +209,10 @@ I also added validation messages on the canvas because mistakes are easier to fi
 If I had more time, I would improve these parts:
 
 - Add better auto-layout for large workflows.
-- Add version history for each node.
-- Add labels on edges, like `approved`, `rejected`, or `needs more info`.
-- Add more realistic simulation data for HR workflows.
-- Add tests for validation rules.
-- Save workflows in a backend or browser storage.
+- Add deeper node version history with rollback.
+- Add a real backend for shared workflow storage.
+- Add role-based permissions.
+- Add more advanced conditional branching rules.
 
 ## Project Status
 

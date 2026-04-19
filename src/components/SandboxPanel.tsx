@@ -57,12 +57,28 @@ export function SandboxPanel({
       {result ? (
         <section className="timeline">
           <p className="section-label">Execution Log</p>
+          {result.summary ? (
+            <div className="simulation-summary">
+              <strong>{result.summary.outcome === 'success' ? 'Successful run' : 'Blocked run'}</strong>
+              <span>
+                {result.summary.completedSteps}/{result.summary.totalSteps} steps · {result.summary.totalMinutes} min estimated
+              </span>
+            </div>
+          ) : null}
           {result.ok ? (
             result.steps.map((step) => (
-              <div className="timeline-row" key={`${result.runId}-${step.nodeId}`}>
-                <span />
+              <div className={`timeline-row timeline-row--${step.status}`} key={`${result.runId}-${step.nodeId}`}>
+                <span aria-hidden="true" />
                 <div>
-                  <strong>{step.title}</strong>
+                  <strong>
+                    {step.title}
+                    {step.pathLabel ? <em>{step.pathLabel}</em> : null}
+                  </strong>
+                  <div className="step-meta">
+                    <span>{step.owner}</span>
+                    <span>{step.durationMinutes} min</span>
+                    <span>{step.status}</span>
+                  </div>
                   <p>{step.detail}</p>
                 </div>
               </div>

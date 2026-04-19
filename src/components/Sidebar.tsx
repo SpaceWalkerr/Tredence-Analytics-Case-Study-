@@ -1,13 +1,15 @@
 import { Download, Upload } from 'lucide-react';
 import { nodeTemplates } from '../data/nodeTemplates';
+import { workflowTemplates } from '../data/workflowTemplates';
 import type { WorkflowNodeType } from '../types/workflow';
 
 type Props = {
   onExport: () => void;
   onImport: (file: File) => void;
+  onLoadTemplate: (templateId: string) => void;
 };
 
-export function Sidebar({ onExport, onImport }: Props) {
+export function Sidebar({ onExport, onImport, onLoadTemplate }: Props) {
   const onDragStart = (event: React.DragEvent, type: WorkflowNodeType) => {
     event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
@@ -16,12 +18,29 @@ export function Sidebar({ onExport, onImport }: Props) {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-mark">H</div>
+        <div className="brand-mark">SW</div>
         <div>
-          <strong>HR Flow</strong>
-          <span>Designer</span>
+          <strong>SpaceWalker</strong>
+          <span>Workflow Designer</span>
         </div>
       </div>
+
+      <section className="side-section">
+        <p className="section-label">HR Workflow Templates</p>
+        <div className="template-list">
+          {workflowTemplates.map((template) => (
+            <button
+              className="workflow-template-card"
+              key={template.id}
+              type="button"
+              onClick={() => onLoadTemplate(template.id)}
+            >
+              <strong>{template.name}</strong>
+              <small>{template.description}</small>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="side-section">
         <p className="section-label">Node Templates</p>

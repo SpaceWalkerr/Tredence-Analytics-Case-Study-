@@ -30,6 +30,7 @@ export const nodeTemplates: NodeTemplate[] = [
     createData: () => ({
       type: 'start',
       label: 'New onboarding request',
+      versionHistory: [],
       startTitle: 'New onboarding request',
       metadata: [{ id: uid(), key: 'source', value: 'HR portal' }],
     }),
@@ -43,6 +44,7 @@ export const nodeTemplates: NodeTemplate[] = [
     createData: () => ({
       type: 'task',
       label: 'Collect documents',
+      versionHistory: [],
       title: 'Collect documents',
       description: 'Request required employee documents.',
       assignee: 'HR coordinator',
@@ -59,6 +61,7 @@ export const nodeTemplates: NodeTemplate[] = [
     createData: () => ({
       type: 'approval',
       label: 'Manager approval',
+      versionHistory: [],
       title: 'Manager approval',
       approverRole: 'Manager',
       autoApproveThreshold: 0,
@@ -73,6 +76,7 @@ export const nodeTemplates: NodeTemplate[] = [
     createData: () => ({
       type: 'automation',
       label: 'Send welcome email',
+      versionHistory: [],
       title: 'Send welcome email',
       actionId: 'send_email',
       actionParams: { to: 'employee.email', subject: 'Welcome aboard' },
@@ -87,6 +91,7 @@ export const nodeTemplates: NodeTemplate[] = [
     createData: () => ({
       type: 'end',
       label: 'Onboarding complete',
+      versionHistory: [],
       endMessage: 'Employee onboarding is complete.',
       summary: true,
     }),
@@ -137,10 +142,10 @@ export const seededWorkflow = {
     },
   ],
   edges: [
-    { id: 'e-start-task', source: 'start-1', target: 'task-1', animated: true },
-    { id: 'e-task-approval', source: 'task-1', target: 'approval-1', animated: true },
-    { id: 'e-approval-automation', source: 'approval-1', target: 'automation-1', animated: true },
-    { id: 'e-automation-end', source: 'automation-1', target: 'end-1', animated: true },
+    { id: 'e-start-task', source: 'start-1', target: 'task-1', animated: true, data: { label: 'Started' }, label: 'Started' },
+    { id: 'e-task-approval', source: 'task-1', target: 'approval-1', animated: true, data: { label: 'Ready for review' }, label: 'Ready for review' },
+    { id: 'e-approval-automation', source: 'approval-1', target: 'automation-1', animated: true, data: { label: 'Approved', condition: 'approved' }, label: 'Approved' },
+    { id: 'e-automation-end', source: 'automation-1', target: 'end-1', animated: true, data: { label: 'Completed' }, label: 'Completed' },
   ],
 };
 

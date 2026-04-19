@@ -8,9 +8,18 @@ export type KeyValue = {
   value: string;
 };
 
+export type NodeHistoryEntry = {
+  id: string;
+  field: string;
+  previousValue: string;
+  nextValue: string;
+  changedAt: string;
+};
+
 export type BaseNodeData = {
   label: string;
   validationErrors?: string[];
+  versionHistory?: NodeHistoryEntry[];
 };
 
 export type StartNodeData = BaseNodeData & {
@@ -56,7 +65,13 @@ export type WorkflowNodeData =
   | EndNodeData;
 
 export type WorkflowNode = Node<WorkflowNodeData, WorkflowNodeType>;
-export type WorkflowEdge = Edge;
+
+export type WorkflowEdgeData = {
+  label?: string;
+  condition?: 'approved' | 'rejected' | 'needs_correction' | 'standard';
+};
+
+export type WorkflowEdge = Edge<WorkflowEdgeData>;
 
 export type AutomationDefinition = {
   id: string;
@@ -74,7 +89,10 @@ export type SimulationStep = {
   nodeId: string;
   nodeType: WorkflowNodeType;
   title: string;
-  status: 'completed' | 'waiting' | 'skipped';
+  status: 'completed' | 'waiting' | 'skipped' | 'failed';
+  owner: string;
+  durationMinutes: number;
+  pathLabel?: string;
   detail: string;
 };
 
@@ -83,4 +101,10 @@ export type SimulationResult = {
   runId: string;
   errors: string[];
   steps: SimulationStep[];
+  summary?: {
+    totalSteps: number;
+    completedSteps: number;
+    totalMinutes: number;
+    outcome: 'success' | 'blocked';
+  };
 };
