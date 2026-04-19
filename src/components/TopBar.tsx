@@ -1,4 +1,4 @@
-import { Database, Redo2, RotateCcw, Trash2, Undo2, Wand2 } from 'lucide-react';
+import { ArrowLeft, Database, Redo2, RotateCcw, Trash2, Undo2, Wand2 } from 'lucide-react';
 
 type Props = {
   canRedo: boolean;
@@ -7,10 +7,12 @@ type Props = {
   nodeCount: number;
   onAutoLayout: () => void;
   onClearSaved: () => void;
+  onDashboard: () => void;
   onRedo: () => void;
   onReset: () => void;
   onRun: () => void;
   onUndo: () => void;
+  saveStatus: 'idle' | 'saving' | 'saved';
   savedAt?: string;
 };
 
@@ -21,21 +23,31 @@ export function TopBar({
   nodeCount,
   onAutoLayout,
   onClearSaved,
+  onDashboard,
   onRedo,
   onReset,
   onRun,
   onUndo,
+  saveStatus,
   savedAt,
 }: Props) {
+  const saveText = saveStatus === 'saving' ? 'Saving...' : savedAt ? `Saved at ${savedAt}` : 'Not saved';
+
   return (
     <header className="topbar">
-      <div>
-        <h1>SpaceWalker Workflow Studio</h1>
-        <p>
-          {nodeCount} steps ·{' '}
-          {errors.length ? `${errors.length} validation issue${errors.length === 1 ? '' : 's'}` : 'Ready to simulate'}
-          {savedAt ? ` · saved ${savedAt}` : ''}
-        </p>
+      <div className="topbar-main">
+        <button className="back-button" type="button" onClick={onDashboard}>
+          <ArrowLeft size={17} />
+          Back to Dashboard
+        </button>
+        <div>
+          <h1>SpaceWalker Workflow Studio</h1>
+          <p>
+            {nodeCount} steps ·{' '}
+            {errors.length ? `${errors.length} validation issue${errors.length === 1 ? '' : 's'}` : 'Ready to simulate'}
+            {` · ${saveText}`}
+          </p>
+        </div>
       </div>
       <div className="topbar-actions">
         <button className="icon-button" type="button" onClick={onUndo} disabled={!canUndo} title="Undo">

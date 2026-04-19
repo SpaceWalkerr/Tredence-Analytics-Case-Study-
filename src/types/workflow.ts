@@ -72,6 +72,7 @@ export type WorkflowEdgeData = {
 };
 
 export type WorkflowEdge = Edge<WorkflowEdgeData>;
+export type ApprovalOutcome = 'approved' | 'rejected' | 'needs_correction';
 
 export type AutomationDefinition = {
   id: string;
@@ -93,6 +94,7 @@ export type SimulationStep = {
   owner: string;
   durationMinutes: number;
   pathLabel?: string;
+  chosenPath?: boolean;
   detail: string;
 };
 

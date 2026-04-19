@@ -1,4 +1,5 @@
 import type {
+  ApprovalOutcome,
   AutomationDefinition,
   SimulationResult,
   SimulationStep,
@@ -24,6 +25,7 @@ export async function getAutomations(): Promise<AutomationDefinition[]> {
 export async function simulateWorkflow(payload: {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  approvalOutcome?: ApprovalOutcome;
 }): Promise<SimulationResult> {
   await delay(550);
   const validation = validateWorkflow(payload.nodes, payload.edges);
@@ -37,7 +39,7 @@ export async function simulateWorkflow(payload: {
     };
   }
 
-  const orderedNodes = topologicalWalk(payload.nodes, payload.edges);
+  const orderedNodes = topologicalWalk(payload.nodes, payload.edges, payload.approvalOutcome ?? 'approved');
   const steps: SimulationStep[] = orderedNodes.map(({ node, via }, index) => ({
     nodeId: node.id,
     nodeType: node.data.type,
@@ -46,6 +48,7 @@ export async function simulateWorkflow(payload: {
     owner: ownerFor(node),
     durationMinutes: durationFor(node),
     pathLabel: via?.data?.label ?? String(via?.label ?? ''),
+    chosenPath: Boolean(via?.data?.condition && via.data.condition !== 'standard'),
     detail: describeStep(node, index + 1, via),
   }));
 
@@ -63,7 +66,7 @@ export async function simulateWorkflow(payload: {
   };
 }
 
-function topologicalWalk(nodes: WorkflowNode[], edges: WorkflowEdge[]) {
+function topologicalWalk(nodes: WorkflowNode[], edges: WorkflowEdge[], approvalOutcome: ApprovalOutcome) {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const outgoing = new Map<string, WorkflowEdge[]>();
   edges.forEach((edge) => {
@@ -84,14 +87,23 @@ function topologicalWalk(nodes: WorkflowNode[], edges: WorkflowEdge[]) {
     ordered.push({ node, via });
 
     const nextEdges = outgoing.get(id) ?? [];
-    const chosenEdges =
-      node.data.type === 'approval'
-        ? nextEdges.filter((edge) => edge.data?.condition === 'approved' || edge.data?.label === 'Approved').slice(0, 1)
-        : nextEdges;
+    const chosenEdges = node.data.type === 'approval' ? chooseApprovalPath(nextEdges, approvalOutcome) : nextEdges;
     queue.push(...chosenEdges.map((edge) => ({ id: edge.target, via: edge })));
   }
 
   return ordered;
+}
+
+function chooseApprovalPath(edges: WorkflowEdge[], approvalOutcome: ApprovalOutcome) {
+  const matching = edges.find((edge) => edge.data?.condition === approvalOutcome);
+  if (matching) return [matching];
+
+  const fallback =
+    edges.find((edge) => edge.data?.condition === 'approved') ??
+    edges.find((edge) => edge.data?.condition === 'standard') ??
+    edges[0];
+
+  return fallback ? [fallback] : [];
 }
 
 function describeStep(node: WorkflowNode, stepNumber: number, via?: WorkflowEdge) {
@@ -102,7 +114,7 @@ function describeStep(node: WorkflowNode, stepNumber: number, via?: WorkflowEdge
     case 'task':
       return `Step ${stepNumber}${path}: assigned "${node.data.title}" to ${node.data.assignee || 'an owner'}.`;
     case 'approval':
-      return `Step ${stepNumber}${path}: requested ${node.data.approverRole} approval and followed the approved path.`;
+      return `Step ${stepNumber}${path}: requested ${node.data.approverRole} approval and followed the selected approval outcome.`;
     case 'automation':
       return `Step ${stepNumber}${path}: executed automation "${node.data.actionId}".`;
     case 'end':

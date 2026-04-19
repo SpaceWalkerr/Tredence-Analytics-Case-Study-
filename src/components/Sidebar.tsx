@@ -1,71 +1,89 @@
-import { Download, Upload } from 'lucide-react';
-import { nodeTemplates } from '../data/nodeTemplates';
-import { workflowTemplates } from '../data/workflowTemplates';
-import type { WorkflowNodeType } from '../types/workflow';
+import {
+  BarChart3,
+  CalendarClock,
+  CheckSquare,
+  Download,
+  Gauge,
+  GitBranch,
+  HelpCircle,
+  Inbox,
+  Link,
+  Settings,
+  ShieldCheck,
+  Upload,
+  Users,
+  Workflow,
+} from 'lucide-react';
 
 type Props = {
   onExport: () => void;
   onImport: (file: File) => void;
-  onLoadTemplate: (templateId: string) => void;
 };
 
-export function Sidebar({ onExport, onImport, onLoadTemplate }: Props) {
-  const onDragStart = (event: React.DragEvent, type: WorkflowNodeType) => {
-    event.dataTransfer.setData('application/reactflow', type);
-    event.dataTransfer.effectAllowed = 'move';
-  };
-
+export function Sidebar({ onExport, onImport }: Props) {
   return (
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-mark">SW</div>
         <div>
           <strong>SpaceWalker</strong>
-          <span>Workflow Designer</span>
+          <span>Workflow OS</span>
         </div>
       </div>
 
-      <section className="side-section">
-        <p className="section-label">HR Workflow Templates</p>
-        <div className="template-list">
-          {workflowTemplates.map((template) => (
-            <button
-              className="workflow-template-card"
-              key={template.id}
-              type="button"
-              onClick={() => onLoadTemplate(template.id)}
-            >
-              <strong>{template.name}</strong>
-              <small>{template.description}</small>
-            </button>
-          ))}
-        </div>
+      <section className="nav-section">
+        <p className="section-label">General</p>
+        <button className="nav-item nav-item--active" type="button">
+          <Gauge size={16} />
+          Dashboard
+        </button>
+        <button className="nav-item" type="button">
+          <ShieldCheck size={16} />
+          Compliance
+        </button>
+        <button className="nav-item" type="button">
+          <CalendarClock size={16} />
+          Scheduler
+          <span>11</span>
+        </button>
+        <button className="nav-item" type="button">
+          <BarChart3 size={16} />
+          Analytics
+        </button>
       </section>
 
-      <section className="side-section">
-        <p className="section-label">Node Templates</p>
-        <div className="template-list">
-          {nodeTemplates.map((template) => {
-            const Icon = template.icon;
-            return (
-              <button
-                className="template-card"
-                draggable
-                key={template.type}
-                onDragStart={(event) => onDragStart(event, template.type)}
-                type="button"
-              >
-                <span className="template-icon" style={{ color: template.color }}>
-                  <Icon size={18} />
-                </span>
-                <span>
-                  <strong>{template.label}</strong>
-                  <small>{template.description}</small>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      <section className="nav-section">
+        <p className="section-label">Automation</p>
+        <button className="nav-item" type="button">
+          <Link size={16} />
+          Integrations
+        </button>
+        <button className="nav-item" type="button">
+          <GitBranch size={16} />
+          Repository
+          <span>7</span>
+        </button>
+        <button className="nav-item" type="button">
+          <Workflow size={16} />
+          Workflows
+        </button>
+      </section>
+
+      <section className="nav-section">
+        <p className="section-label">Resources</p>
+        <button className="nav-item" type="button">
+          <Users size={16} />
+          Members
+        </button>
+        <button className="nav-item" type="button">
+          <Inbox size={16} />
+          Inbox
+          <span>13</span>
+        </button>
+        <button className="nav-item" type="button">
+          <CheckSquare size={16} />
+          Messages
+        </button>
       </section>
 
       <section className="side-section">
@@ -90,6 +108,17 @@ export function Sidebar({ onExport, onImport, onLoadTemplate }: Props) {
           </label>
         </div>
       </section>
+
+      <div className="sidebar-footer">
+        <button className="nav-item" type="button">
+          <Settings size={16} />
+          Settings
+        </button>
+        <button className="nav-item" type="button">
+          <HelpCircle size={16} />
+          Help & Support
+        </button>
+      </div>
     </aside>
   );
 }

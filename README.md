@@ -22,6 +22,9 @@ The app is built with **React**, **TypeScript**, **Vite**, and **React Flow**.
 - Load ready-made HR workflow templates.
 - Add labels to connection lines, like `Approved`, `Rejected`, and `Needs correction`.
 - Save the workflow in the browser after refresh.
+- See a clear autosave indicator in the header.
+- Click validation errors to jump to the broken node.
+- Choose approval outcomes in the simulation sandbox.
 - See simple version history for node edits.
 - Use undo, redo, zoom controls, mini-map, and auto-layout.
 
@@ -85,24 +88,27 @@ The tests check the important workflow rules, like missing Start nodes, missing 
 
 ## How To Use The App
 
-1. Look at the left sidebar.
-2. Choose a ready-made template, or drag a node like `Task` onto the canvas.
-3. Connect nodes by dragging from one small dot to another small dot.
-4. Click any node to open its edit form.
-5. Click any connection line to edit its label.
-6. Change the title, assignee, approval role, automation action, or other fields.
-7. Click `Test Workflow` to open the sandbox.
-8. Run the simulation to see the workflow step-by-step.
+1. Choose a workflow from the dashboard.
+2. Choose `Create From Scratch` for an empty canvas, or pick a ready-made template.
+3. Look at the left sidebar.
+4. Choose another ready-made template, or drag a node like `Task` onto the canvas.
+5. Connect nodes by dragging from one small dot to another small dot.
+6. Click any node to open its edit form.
+7. Click any connection line to edit its label.
+8. Click any validation error to jump to the broken node.
+9. Change the title, assignee, approval role, automation action, or other fields.
+10. Click `Test Workflow` to open the sandbox.
+11. Pick an approval outcome and run the simulation to see the workflow step-by-step.
 
 ## Ready-Made Templates
 
-The app includes these HR templates:
+The app includes one blank workflow option plus these larger HR templates. Each ready-made template has about 12 connected steps, with tasks, approvals, automation, and branching paths:
 
+- Create From Scratch
 - Employee onboarding
 - Leave approval
 - Document verification
 - Asset request
-- Exit process
 
 ## What The Sandbox Does
 
@@ -117,6 +123,7 @@ It shows:
 - Who owns each step.
 - Success or waiting status.
 - The conditional path used, like `Approved`.
+- A selector for testing `Approved`, `Rejected`, or `Needs correction` paths.
 - A final summary with total steps and total estimated time.
 
 Example problems it can catch:
@@ -149,6 +156,7 @@ src/
 | `src/components/NodeFormPanel.tsx` | The form shown when you click a node |
 | `src/components/EdgeFormPanel.tsx` | The form shown when you click a connection line |
 | `src/components/WorkflowNodeCard.tsx` | The custom node design on the canvas |
+| `src/components/WorkflowDashboard.tsx` | The workflow list screen shown before the editor |
 | `src/api/mockWorkflowApi.ts` | Fake API for automations and simulation |
 | `src/utils/validation.ts` | Checks if the workflow is valid |
 | `src/data/nodeTemplates.ts` | Defines the available node templates |

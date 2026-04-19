@@ -1,5 +1,5 @@
 import { Handle, Position } from '@xyflow/react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Box, CheckCircle2, Clock3, Zap } from 'lucide-react';
 import { templateByType } from '../data/nodeTemplates';
 import type { WorkflowNodeData } from '../types/workflow';
 
@@ -32,8 +32,30 @@ export function WorkflowNodeCard({ data, selected }: { data: WorkflowNodeData; s
         </div>
       )}
       {data.type !== 'end' && <Handle className="node-handle" type="source" position={Position.Right} />}
+      <div className="node-metrics">
+        <span>
+          <Box size={12} />
+          {metricSeed(data.label, 8)}
+        </span>
+        <span>
+          <Clock3 size={12} />
+          {metricSeed(data.label, 21)}
+        </span>
+        <span className="node-metrics--ok">
+          <CheckCircle2 size={12} />
+          {metricSeed(data.label, 35)}
+        </span>
+        <span className="node-metrics--fast">
+          <Zap size={12} />
+          {metricSeed(data.label, 55)}
+        </span>
+      </div>
     </div>
   );
+}
+
+function metricSeed(value: string, offset: number) {
+  return ((value.length * 7 + offset) % 89) + 10;
 }
 
 function subtitleFor(data: WorkflowNodeData) {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { workflowTemplates } from '../data/workflowTemplates';
 import type { WorkflowEdge, WorkflowNode, WorkflowNodeData, WorkflowNodeType } from '../types/workflow';
 import { validateWorkflow } from './validation';
 
@@ -86,5 +87,21 @@ describe('validateWorkflow', () => {
 
     expect(result.nodeErrors.task).toContain('Task title is required.');
     expect(result.nodeErrors.automation).toContain('Automated Step requires an action.');
+  });
+
+  it('accepts every built-in workflow template', () => {
+    const results = workflowTemplates.map((template) => ({
+      name: template.name,
+      nodeCount: template.nodes.length,
+      errors: validateWorkflow(template.nodes, template.edges).errors,
+    }));
+
+    expect(results.map((result) => [result.name, result.nodeCount])).toEqual([
+      ['Employee Onboarding', 12],
+      ['Leave Approval', 12],
+      ['Document Verification', 12],
+      ['Asset Request', 12],
+    ]);
+    expect(results.flatMap((result) => result.errors)).toEqual([]);
   });
 });

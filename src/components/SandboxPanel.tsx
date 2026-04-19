@@ -1,5 +1,5 @@
 import { CheckCircle2, Loader2, X } from 'lucide-react';
-import type { SimulationResult, WorkflowEdge, WorkflowNode } from '../types/workflow';
+import type { ApprovalOutcome, SimulationResult, WorkflowEdge, WorkflowNode } from '../types/workflow';
 
 type Props = {
   edges: WorkflowEdge[];
@@ -7,7 +7,9 @@ type Props = {
   isRunning: boolean;
   nodes: WorkflowNode[];
   onClose: () => void;
+  onOutcomeChange: (outcome: ApprovalOutcome) => void;
   onRun: () => void;
+  outcome: ApprovalOutcome;
   result?: SimulationResult;
   validationErrors: string[];
 };
@@ -18,7 +20,9 @@ export function SandboxPanel({
   isRunning,
   nodes,
   onClose,
+  onOutcomeChange,
   onRun,
+  outcome,
   result,
   validationErrors,
 }: Props) {
@@ -46,6 +50,15 @@ export function SandboxPanel({
         <span>{nodes.length} nodes, {edges.length} edges</span>
       </div>
 
+      <label className="field-group">
+        <span>Approval outcome to test</span>
+        <select value={outcome} onChange={(event) => onOutcomeChange(event.target.value as ApprovalOutcome)}>
+          <option value="approved">Approved path</option>
+          <option value="rejected">Rejected path</option>
+          <option value="needs_correction">Needs correction path</option>
+        </select>
+      </label>
+
       {validationErrors.length ? (
         <div className="error-box">
           {validationErrors.map((error) => (
@@ -67,7 +80,14 @@ export function SandboxPanel({
           ) : null}
           {result.ok ? (
             result.steps.map((step) => (
-              <div className={`timeline-row timeline-row--${step.status}`} key={`${result.runId}-${step.nodeId}`}>
+              <div
+                className={[
+                  'timeline-row',
+                  `timeline-row--${step.status}`,
+                  step.chosenPath ? 'timeline-row--chosen' : '',
+                ].join(' ')}
+                key={`${result.runId}-${step.nodeId}-${step.pathLabel ?? 'step'}`}
+              >
                 <span aria-hidden="true" />
                 <div>
                   <strong>

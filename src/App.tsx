@@ -15,19 +15,23 @@ import {
   type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CanvasTemplateTray } from './components/CanvasTemplateTray';
+import { ConfirmDialog } from './components/ConfirmDialog';
 import { EdgeFormPanel } from './components/EdgeFormPanel';
+import { LoadingOverlay } from './components/LoadingOverlay';
 import { NodeFormPanel } from './components/NodeFormPanel';
 import { SandboxPanel } from './components/SandboxPanel';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
-import { ValidationPanel } from './components/ValidationPanel';
+import { ValidationPanel, type ValidationIssue } from './components/ValidationPanel';
+import { WorkflowDashboard } from './components/WorkflowDashboard';
 import { WorkflowNodeCard } from './components/WorkflowNodeCard';
 import { templateByType } from './data/nodeTemplates';
 import { cloneWorkflow, defaultWorkflowTemplate, workflowTemplates } from './data/workflowTemplates';
 import { useAutomations } from './hooks/useAutomations';
 import { simulateWorkflow } from './api/mockWorkflowApi';
-import type { SerializedWorkflow, SimulationResult, WorkflowEdge, WorkflowNode, WorkflowNodeData, WorkflowNodeType } from './types/workflow';
+import type { ApprovalOutcome, SerializedWorkflow, SimulationResult, WorkflowEdge, WorkflowNode, WorkflowNodeData, WorkflowNodeType } from './types/workflow';
 import { validateWorkflow } from './utils/validation';
 
 const nodeTypes: NodeTypes = {
@@ -56,6 +60,14 @@ const initialWorkflow = () => {
   return cloneWorkflow(defaultWorkflowTemplate);
 };
 
+const hasSavedWorkflow = () => {
+  try {
+    return Boolean(window.localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return false;
+  }
+};
+
 export default function App() {
   return (
     <ReactFlowProvider>
@@ -65,9 +77,10 @@ export default function App() {
 }
 
 function WorkflowDesigner() {
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, setCenter } = useReactFlow();
   const { automations } = useAutomations();
   const starter = useMemo(() => initialWorkflow(), []);
+  const [view, setView] = useState<'dashboard' | 'designer'>('dashboard');
   const [nodes, setNodes] = useState<WorkflowNode[]>(starter.nodes);
   const [edges, setEdges] = useState<WorkflowEdge[]>(starter.edges);
   const [selectedNodeId, setSelectedNodeId] = useState<string>();
@@ -77,19 +90,34 @@ function WorkflowDesigner() {
   const [sandboxOpen, setSandboxOpen] = useState(false);
   const [simulation, setSimulation] = useState<SimulationResult>();
   const [isRunning, setIsRunning] = useState(false);
+  const [approvalOutcome, setApprovalOutcome] = useState<ApprovalOutcome>('approved');
+  const [loadingMessage, setLoadingMessage] = useState<string>();
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string>();
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [savedAt, setSavedAt] = useState<string>();
+  const saveTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
+    if (view !== 'designer') return;
+    setSaveStatus('saving');
     const payload: SerializedWorkflow = { nodes, edges, exportedAt: new Date().toISOString() };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    setSavedAt(new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date()));
-  }, [nodes, edges]);
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      setSavedAt(new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date()));
+      setSaveStatus('saved');
+    }, 450);
+
+    return () => window.clearTimeout(saveTimer.current);
+  }, [nodes, edges, view]);
 
   const validation = useMemo(() => validateWorkflow(nodes, edges), [nodes, edges]);
   const nodesWithValidation = useMemo(
     () =>
       nodes.map((node) => ({
         ...node,
+        selected: node.id === selectedNodeId,
         data: {
           ...node.data,
           validationErrors: validation.nodeErrors[node.id] ?? [],
@@ -99,6 +127,7 @@ function WorkflowDesigner() {
   );
   const selectedNode = nodesWithValidation.find((node) => node.id === selectedNodeId);
   const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+  const validationIssues = useMemo(() => buildValidationIssues(validation), [validation]);
 
   const commit = useCallback(
     (nextNodes: WorkflowNode[], nextEdges: WorkflowEdge[]) => {
@@ -199,7 +228,7 @@ function WorkflowDesigner() {
   const runSimulation = async () => {
     setSandboxOpen(true);
     setIsRunning(true);
-    const result = await simulateWorkflow({ nodes, edges });
+    const result = await simulateWorkflow({ nodes, edges, approvalOutcome });
     setSimulation(result);
     setIsRunning(false);
   };
@@ -232,28 +261,76 @@ function WorkflowDesigner() {
     commit(next, edges);
   };
 
-  const loadTemplate = (templateId: string) => {
+  const showLoading = async (message = 'Loading workflow...') => {
+    setLoadingMessage(message);
+    await new Promise((resolve) => window.setTimeout(resolve, 1000));
+    setLoadingMessage(undefined);
+  };
+
+  const loadTemplate = async (templateId: string, confirmReplace = true) => {
     const template = workflowTemplates.find((item) => item.id === templateId);
     if (!template) return;
-    if (!window.confirm(`Load "${template.name}" and replace the current canvas?`)) return;
+    if (confirmReplace) {
+      setPendingTemplateId(templateId);
+      return;
+    }
+    await showLoading(`Loading ${template.name}...`);
     const workflow = cloneWorkflow(template);
     commit(workflow.nodes, workflow.edges);
     setSelectedNodeId(undefined);
     setSelectedEdgeId(undefined);
     setSimulation(undefined);
+    setView('designer');
+  };
+
+  const confirmTemplateLoad = async () => {
+    if (!pendingTemplateId) return;
+    const templateId = pendingTemplateId;
+    setPendingTemplateId(undefined);
+    await loadTemplate(templateId, false);
   };
 
   const resetWorkflow = () => {
-    if (!window.confirm('Reset the canvas to the sample Employee Onboarding workflow?')) return;
+    setConfirmResetOpen(true);
+  };
+
+  const confirmResetWorkflow = async () => {
+    setConfirmResetOpen(false);
+    await showLoading('Loading sample workflow...');
     const workflow = cloneWorkflow(defaultWorkflowTemplate);
     commit(workflow.nodes, workflow.edges);
     setSelectedNodeId(undefined);
     setSelectedEdgeId(undefined);
+    setView('designer');
+  };
+
+  const createBlankWorkflow = async () => {
+    await showLoading('Loading blank workflow...');
+    commit([], []);
+    setSelectedNodeId(undefined);
+    setSelectedEdgeId(undefined);
+    setSimulation(undefined);
+    setView('designer');
+  };
+
+  const openSavedWorkflow = async () => {
+    await showLoading('Loading saved workflow...');
+    setView('designer');
   };
 
   const clearSavedWorkflow = () => {
     window.localStorage.removeItem(STORAGE_KEY);
     setSavedAt(undefined);
+    setSaveStatus('idle');
+  };
+
+  const selectValidationIssue = (issue: ValidationIssue) => {
+    if (!issue.nodeId) return;
+    const node = nodes.find((item) => item.id === issue.nodeId);
+    if (!node) return;
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(undefined);
+    setCenter(node.position.x + 120, node.position.y + 40, { duration: 450, zoom: 1.15 });
   };
 
   const exportWorkflow = () => {
@@ -271,15 +348,64 @@ function WorkflowDesigner() {
     const text = await file.text();
     const payload = JSON.parse(text) as Partial<SerializedWorkflow>;
     if (payload.nodes && payload.edges) {
+      await showLoading('Loading imported workflow...');
       commit(payload.nodes, payload.edges);
       setSelectedNodeId(undefined);
       setSelectedEdgeId(undefined);
+      setView('designer');
     }
   };
 
+  if (view === 'dashboard') {
+    return (
+      <>
+        {loadingMessage ? <LoadingOverlay message={loadingMessage} /> : null}
+        {pendingTemplateId ? (
+          <ConfirmDialog
+            title="Load this workflow?"
+            description="This will replace the workflow currently on the canvas."
+            onCancel={() => setPendingTemplateId(undefined)}
+            onConfirm={confirmTemplateLoad}
+          />
+        ) : null}
+        {confirmResetOpen ? (
+          <ConfirmDialog
+            title="Reset workflow?"
+            description="This will replace the canvas with the sample Employee Onboarding workflow."
+            onCancel={() => setConfirmResetOpen(false)}
+            onConfirm={confirmResetWorkflow}
+          />
+        ) : null}
+        <WorkflowDashboard
+          hasSavedWorkflow={hasSavedWorkflow()}
+          onCreateBlank={createBlankWorkflow}
+          onOpenSaved={openSavedWorkflow}
+          onSelectTemplate={(templateId) => loadTemplate(templateId, false)}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar onExport={exportWorkflow} onImport={importWorkflow} onLoadTemplate={loadTemplate} />
+      {loadingMessage ? <LoadingOverlay message={loadingMessage} /> : null}
+      {pendingTemplateId ? (
+        <ConfirmDialog
+          title="Load this workflow?"
+          description="This will replace the workflow currently on the canvas."
+          onCancel={() => setPendingTemplateId(undefined)}
+          onConfirm={confirmTemplateLoad}
+        />
+      ) : null}
+      {confirmResetOpen ? (
+        <ConfirmDialog
+          title="Reset workflow?"
+          description="This will replace the canvas with the sample Employee Onboarding workflow."
+          onCancel={() => setConfirmResetOpen(false)}
+          onConfirm={confirmResetWorkflow}
+        />
+      ) : null}
+      <Sidebar onExport={exportWorkflow} onImport={importWorkflow} />
       <main className="designer">
         <TopBar
           canRedo={future.length > 0}
@@ -288,10 +414,12 @@ function WorkflowDesigner() {
           nodeCount={nodes.length}
           onAutoLayout={autoLayout}
           onClearSaved={clearSavedWorkflow}
+          onDashboard={() => setView('dashboard')}
           onRedo={redo}
           onReset={resetWorkflow}
           onRun={runSimulation}
           onUndo={undo}
+          saveStatus={saveStatus}
           savedAt={savedAt}
         />
         <section className="canvas-wrap">
@@ -322,13 +450,56 @@ function WorkflowDesigner() {
             fitView
           >
             <Background color="#cad4dd" gap={20} size={1.2} variant={BackgroundVariant.Dots} />
-            <MiniMap pannable zoomable />
+            <MiniMap pannable zoomable position="top-right" />
             <Controls />
           </ReactFlow>
-          <ValidationPanel errors={validation.errors} />
+          <ValidationPanel issues={validationIssues} onIssueClick={selectValidationIssue} />
+          <CanvasTemplateTray onCreateBlank={createBlankWorkflow} onLoadTemplate={loadTemplate} />
         </section>
       </main>
       <aside className="inspector">
+        <div className="overview-panel">
+          <div className="overview-header">
+            <div>
+              <h2>Performance Overview</h2>
+              <p>Overview Performance Time</p>
+            </div>
+            <span aria-hidden="true">×</span>
+          </div>
+
+          <section className="overview-section">
+            <div className="overview-section-title">
+              <strong>Insight Metrics</strong>
+              <span>+</span>
+            </div>
+            <div className="search-mock">Search Here...</div>
+            <div className="coverage-card">
+              <strong>Automation Coverage</strong>
+              <p>Your last week is better 72%</p>
+            </div>
+            <div className="workflow-mini-card">
+              <strong>Current Workflow</strong>
+              <p>Triggered by HR actions</p>
+              <div className="progress-strip">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="mini-tags">
+                <span>Task: {nodes.filter((node) => node.data.type === 'task').length}</span>
+                <span>Exec: {nodes.filter((node) => node.data.type === 'automation').length}</span>
+                <span>Done: {nodes.filter((node) => node.data.type === 'end').length}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="overview-section">
+            <div className="overview-section-title">
+              <strong>Flow Objectives</strong>
+              <span>+</span>
+            </div>
+          </section>
+        </div>
         <NodeFormPanel automations={automations} node={selectedNode} onDelete={deleteNode} onUpdate={updateNode} />
         <EdgeFormPanel edge={selectedEdge} onDelete={deleteEdge} onUpdate={updateEdge} />
         {!selectedNode && !selectedEdge ? (
@@ -345,12 +516,32 @@ function WorkflowDesigner() {
         isRunning={isRunning}
         nodes={nodesWithValidation}
         onClose={() => setSandboxOpen(false)}
+        onOutcomeChange={setApprovalOutcome}
         onRun={runSimulation}
+        outcome={approvalOutcome}
         result={simulation}
         validationErrors={validation.errors}
       />
     </div>
   );
+}
+
+function buildValidationIssues(validation: ReturnType<typeof validateWorkflow>): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const nodeMessages = new Set<string>();
+
+  Object.entries(validation.nodeErrors).forEach(([nodeId, messages]) => {
+    messages.forEach((message) => {
+      nodeMessages.add(message);
+      issues.push({ id: `${nodeId}-${message}`, message, nodeId });
+    });
+  });
+
+  validation.errors
+    .filter((message) => !nodeMessages.has(message))
+    .forEach((message) => issues.push({ id: `global-${message}`, message }));
+
+  return issues;
 }
 
 function addNodeHistory(previous: WorkflowNodeData, next: WorkflowNodeData): WorkflowNodeData {
