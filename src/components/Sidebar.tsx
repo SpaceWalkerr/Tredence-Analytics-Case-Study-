@@ -62,7 +62,6 @@ export function Sidebar({ activePage, onExport, onImport, onNavigate }: Props) {
         <button className={itemClass('scheduler')} type="button" onClick={() => onNavigate('scheduler')}>
           <CalendarClock size={16} />
           Scheduler
-          <span>11</span>
         </button>
         <button className={itemClass('analytics')} type="button" onClick={() => onNavigate('analytics')}>
           <BarChart3 size={16} />
@@ -79,7 +78,6 @@ export function Sidebar({ activePage, onExport, onImport, onNavigate }: Props) {
         <button className={itemClass('repository')} type="button" onClick={() => onNavigate('repository')}>
           <GitBranch size={16} />
           Repository
-          <span>7</span>
         </button>
         <button className={itemClass('workflows')} type="button" onClick={() => onNavigate('workflows')}>
           <Workflow size={16} />
@@ -96,7 +94,6 @@ export function Sidebar({ activePage, onExport, onImport, onNavigate }: Props) {
         <button className={itemClass('inbox')} type="button" onClick={() => onNavigate('inbox')}>
           <Inbox size={16} />
           Inbox
-          <span>13</span>
         </button>
         <button className={itemClass('messages')} type="button" onClick={() => onNavigate('messages')}>
           <CheckSquare size={16} />

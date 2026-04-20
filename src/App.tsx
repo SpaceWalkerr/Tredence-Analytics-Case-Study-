@@ -105,6 +105,8 @@ function WorkflowDesigner() {
   const [pendingTemplateId, setPendingTemplateId] = useState<string>();
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [savedAt, setSavedAt] = useState<string>();
+  const [insightsOpen, setInsightsOpen] = useState(true);
+  const [objectivesOpen, setObjectivesOpen] = useState(true);
   const saveTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
@@ -167,14 +169,19 @@ function WorkflowDesigner() {
   const onConnect = useCallback(
     (connection: Connection) => {
       const sourceNode = nodes.find((node) => node.id === connection.source);
-      const label = sourceNode?.data.type === 'approval' ? 'Approved' : '';
+      const approvalBranch =
+        sourceNode?.data.type === 'approval' ? nextApprovalBranchLabel(edges, String(connection.source ?? '')) : undefined;
+      const label = approvalBranch?.label ?? '';
       const nextEdges = addEdge(
         {
           ...connection,
           animated: true,
           label,
           type: 'workflow',
-          data: { label, condition: label ? 'approved' : 'standard' },
+          data: {
+            label,
+            condition: approvalBranch?.condition ?? (label ? 'approved' : 'standard'),
+          },
         },
         edges,
       );
@@ -457,6 +464,27 @@ function WorkflowDesigner() {
     );
   }
 
+  const taskCount = nodes.filter((node) => node.data.type === 'task').length;
+  const automationCount = nodes.filter((node) => node.data.type === 'automation').length;
+  const approvalCount = nodes.filter((node) => node.data.type === 'approval').length;
+  const endCount = nodes.filter((node) => node.data.type === 'end').length;
+  const totalNodes = nodes.length;
+  const actionableNodeCount = nodes.filter((node) => node.data.type !== 'start' && node.data.type !== 'end').length;
+  const automationCoverage = toPercent(automationCount, actionableNodeCount || totalNodes);
+  const connectedNodeCount = countConnectedNodes(nodes, edges);
+  const connectivityScore = toPercent(connectedNodeCount, totalNodes);
+  const branchCoverage = approvalBranchCoverage(nodes, edges);
+  const branchCoveragePct = toPercent(branchCoverage.ready, branchCoverage.total || 1);
+  const readinessScore = Math.max(
+    0,
+    Math.round((automationCoverage * 0.35) + (connectivityScore * 0.4) + (branchCoveragePct * 0.25) - validation.errors.length * 6),
+  );
+  const taskPct = toPercent(taskCount, totalNodes || 1);
+  const automationPct = toPercent(automationCount, totalNodes || 1);
+  const endPct = toPercent(endCount, totalNodes || 1);
+  const objectiveNodes = nodes.slice(0, 5);
+  const remainingObjectives = Math.max(nodes.length - objectiveNodes.length, 0);
+
   return (
     <div className="app-shell">
       {loadingMessage ? <LoadingOverlay message={loadingMessage} /> : null}
@@ -529,6 +557,7 @@ function WorkflowDesigner() {
             }}
             fitView
             fitViewOptions={{ padding: 0.28 }}
+            proOptions={{ hideAttribution: true }}
           >
             <Background color="#cad4dd" gap={20} size={1.2} variant={BackgroundVariant.Dots} />
             <MiniMap pannable zoomable position="top-right" />
@@ -553,36 +582,92 @@ function WorkflowDesigner() {
           </div>
 
           <section className="overview-section">
-            <div className="overview-section-title">
-              <strong>Insight Metrics</strong>
-              <span>+</span>
-            </div>
-            <div className="search-mock">Search Here...</div>
-            <div className="coverage-card">
-              <strong>Automation Coverage</strong>
-              <p>Your last week is better 72%</p>
-            </div>
-            <div className="workflow-mini-card">
-              <strong>Current Workflow</strong>
-              <p>Triggered by HR actions</p>
-              <div className="progress-strip">
-                <span />
-                <span />
-                <span />
+            <button
+              aria-expanded={insightsOpen}
+              className="overview-section-title"
+              type="button"
+              onClick={() => setInsightsOpen((isOpen) => !isOpen)}
+            >
+              <span className="overview-section-heading">
+                <strong>Insight Metrics</strong>
+                <small>Live workflow signals</small>
+              </span>
+              <span className="dropdown-toggle">{insightsOpen ? '−' : '+'}</span>
+            </button>
+            {insightsOpen ? (
+              <div className="overview-dropdown-content">
+                <div className="search-mock">Search workflow signals</div>
+                <div className="coverage-card metric-card">
+                  <div>
+                    <strong>Automation Coverage</strong>
+                    <p>{automationCount} automated steps connected to this workflow</p>
+                  </div>
+                  <span className="metric-value">{automationCoverage}%</span>
+                  <div className="metric-row">
+                    <span>{connectedNodeCount}/{totalNodes} nodes connected</span>
+                    <span>{branchCoverage.ready}/{branchCoverage.total} approvals branch-ready</span>
+                  </div>
+                </div>
+                <div className="workflow-mini-card metric-card">
+                  <div>
+                    <strong>Current Workflow</strong>
+                    <p>{workflowName}</p>
+                  </div>
+                  <div className="progress-strip">
+                    <span style={{ width: `${Math.max(taskPct, 8)}%` }} />
+                    <span style={{ width: `${Math.max(automationPct, 8)}%` }} />
+                    <span style={{ width: `${Math.max(endPct, 8)}%` }} />
+                  </div>
+                  <div className="mini-tags">
+                    <span>Tasks: {taskCount}</span>
+                    <span>Automations: {automationCount}</span>
+                    <span>Ends: {endCount}</span>
+                    <span>Readiness: {readinessScore}%</span>
+                    <span>Validation issues: {validation.errors.length}</span>
+                  </div>
+                </div>
               </div>
-              <div className="mini-tags">
-                <span>Task: {nodes.filter((node) => node.data.type === 'task').length}</span>
-                <span>Exec: {nodes.filter((node) => node.data.type === 'automation').length}</span>
-                <span>Done: {nodes.filter((node) => node.data.type === 'end').length}</span>
-              </div>
-            </div>
+            ) : null}
           </section>
 
           <section className="overview-section">
-            <div className="overview-section-title">
-              <strong>Flow Objectives</strong>
-              <span>+</span>
-            </div>
+            <button
+              aria-expanded={objectivesOpen}
+              className="overview-section-title"
+              type="button"
+              onClick={() => setObjectivesOpen((isOpen) => !isOpen)}
+            >
+              <span className="overview-section-heading">
+                <strong>Flow Objectives</strong>
+                <small>{nodes.length} mapped workflow steps</small>
+              </span>
+              <span className="dropdown-toggle">{objectivesOpen ? '−' : '+'}</span>
+            </button>
+            {objectivesOpen ? (
+              <div className="overview-dropdown-content">
+                {objectiveNodes.map((node, index) => (
+                  <div className="objective-card" key={`objective-${node.id}`}>
+                    <div className="objective-card-top">
+                      <span className="objective-step-number">{String(index + 1).padStart(2, '0')}</span>
+                      <div>
+                        <strong>{node.data.label}</strong>
+                        <p>{nodeOwnerLabel(node.data)}</p>
+                      </div>
+                    </div>
+                    <div className="mini-tags">
+                      <span>{node.data.type}</span>
+                      <span>{node.data.validationErrors?.length ? 'Needs fix' : 'Ready'}</span>
+                    </div>
+                  </div>
+                ))}
+                {remainingObjectives > 0 ? (
+                  <div className="objective-card objective-card--muted">
+                    <strong>{remainingObjectives} more objectives</strong>
+                    <p>Open the canvas to review the remaining workflow steps.</p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </section>
         </div>
         <NodeFormPanel automations={automations} node={selectedNode} onDelete={deleteNode} onUpdate={updateNode} />
@@ -611,12 +696,69 @@ function WorkflowDesigner() {
   );
 }
 
+function nextApprovalBranchLabel(edges: WorkflowEdge[], sourceId: string): {
+  label: 'Approved' | 'Rejected' | 'Needs correction';
+  condition: 'approved' | 'rejected' | 'needs_correction';
+} | undefined {
+  const outgoing = edges.filter((edge) => edge.source === sourceId);
+  const used = new Set(outgoing.map((edge) => edge.data?.condition).filter(Boolean));
+
+  const orderedBranches: Array<{
+    label: 'Approved' | 'Rejected' | 'Needs correction';
+    condition: 'approved' | 'rejected' | 'needs_correction';
+  }> = [
+    { label: 'Approved', condition: 'approved' },
+    { label: 'Rejected', condition: 'rejected' },
+    { label: 'Needs correction', condition: 'needs_correction' },
+  ];
+
+  return orderedBranches.find((branch) => !used.has(branch.condition));
+}
+
+function toPercent(part: number, total: number) {
+  if (total <= 0) return 0;
+  return Math.round((part / total) * 100);
+}
+
+function countConnectedNodes(nodes: WorkflowNode[], edges: WorkflowEdge[]) {
+  if (nodes.length === 0) return 0;
+  const connected = new Set<string>();
+  edges.forEach((edge) => {
+    connected.add(edge.source);
+    connected.add(edge.target);
+  });
+  return nodes.filter((node) => connected.has(node.id)).length;
+}
+
+function approvalBranchCoverage(nodes: WorkflowNode[], edges: WorkflowEdge[]) {
+  const approvals = nodes.filter((node) => node.data.type === 'approval');
+  const ready = approvals.filter((node) => {
+    const outgoing = edges.filter((edge) => edge.source === node.id);
+    const conditions = new Set(outgoing.map((edge) => edge.data?.condition));
+    return (
+      conditions.has('approved') &&
+      conditions.has('rejected') &&
+      conditions.has('needs_correction')
+    );
+  }).length;
+
+  return { ready, total: approvals.length };
+}
+
 function slugify(value: string) {
   return value
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'hr-workflow';
+}
+
+function nodeOwnerLabel(data: WorkflowNodeData) {
+  if (data.type === 'task') return data.assignee || 'People Ops team';
+  if (data.type === 'approval') return `${data.approverRole} approval`;
+  if (data.type === 'automation') return 'System automation';
+  if (data.type === 'start') return 'Workflow trigger';
+  return 'Completion summary';
 }
 
 function buildValidationIssues(validation: ReturnType<typeof validateWorkflow>): ValidationIssue[] {

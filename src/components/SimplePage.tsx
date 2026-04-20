@@ -71,6 +71,11 @@ export function SimplePage({ page }: Props) {
         <p className="section-label">SpaceWalker Module</p>
         <h1>{copy.title}</h1>
         <p>{copy.subtitle}</p>
+        <div className="simple-page-metrics">
+          <span>Draft</span>
+          <span>Configurable</span>
+          <span>Future module</span>
+        </div>
       </section>
 
       <section className="simple-card-grid">
