@@ -30,7 +30,7 @@ export function validateWorkflow(nodes: WorkflowNode[], edges: WorkflowEdge[]): 
     const outgoing = edges.filter((edge) => edge.source === node.id);
 
     if (node.data.type === 'start' && incoming.length > 0) {
-      addNodeError(node.id, 'Start node cannot have incoming connections.');
+      addNodeError(node.id, 'Start node must be the first step and cannot have incoming connections.');
     }
 
     if (node.data.type !== 'start' && incoming.length === 0) {

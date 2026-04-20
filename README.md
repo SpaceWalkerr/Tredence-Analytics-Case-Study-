@@ -10,6 +10,22 @@ Start -> Collect Documents -> Manager Approval -> Send Email -> End
 
 The app is built with **React**, **TypeScript**, **Vite**, and **React Flow**.
 
+## Screenshots
+
+Add screenshots to `docs/screenshots/` before submitting.
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Workflow Canvas
+![Workflow Canvas](docs/screenshots/workflow-canvas.png)
+
+### Node Configuration
+![Node Configuration](docs/screenshots/node-configuration.png)
+
+### Simulation Sandbox
+![Simulation Sandbox](docs/screenshots/simulation-sandbox.png)
+
 ## What You Can Do
 
 - Drag workflow steps from the left sidebar onto the canvas.
@@ -84,7 +100,7 @@ To run validation tests, use:
 npm run test
 ```
 
-The tests check the important workflow rules, like missing Start nodes, missing End nodes, broken connections, cycles, and required fields.
+The tests check the important workflow rules, like missing Start nodes, missing End nodes, a Start node that is not first, broken connections, cycles, and required fields.
 
 ## How To Use The App
 
@@ -116,7 +132,7 @@ The sandbox checks the workflow and then pretends to run it.
 
 It shows:
 
-- The full workflow JSON.
+- The full `POST /simulate` request payload.
 - Validation problems, if something is missing.
 - A step-by-step execution log if the workflow is valid.
 - Time taken for each step.
@@ -148,6 +164,15 @@ src/
   utils/        validation logic lives here
 ```
 
+## Architecture Notes
+
+- Canvas orchestration lives in `src/App.tsx`, where React Flow node changes, edge changes, drops, selection, and layout actions are coordinated.
+- Node definitions and defaults live in `src/data/nodeTemplates.ts`, while larger reusable HR flows live in `src/data/workflowTemplates.ts`.
+- Node rendering is isolated in `src/components/WorkflowNodeCard.tsx`, and node editing is isolated in `src/components/NodeFormPanel.tsx`.
+- API behavior is isolated in `src/api/mockWorkflowApi.ts`, with endpoint-style contracts for `GET /automations` and `POST /simulate`.
+- Reusable hooks keep async workflow state out of leaf components: `useAutomations` loads mock action definitions, and `useWorkflowSimulation` owns simulation request state.
+- Workflow node, edge, API request, and simulation response interfaces live in `src/types/workflow.ts` so new node types can be added from one clear type boundary.
+
 ## Important Files
 
 | File | What It Does |
@@ -159,6 +184,8 @@ src/
 | `src/components/WorkflowDashboard.tsx` | The workflow list screen shown before the editor |
 | `src/components/SimplePage.tsx` | Placeholder pages for sidebar modules |
 | `src/api/mockWorkflowApi.ts` | Fake API for automations and simulation |
+| `src/hooks/useAutomations.ts` | Loads available automation definitions from the mock API |
+| `src/hooks/useWorkflowSimulation.ts` | Owns simulation API state and run/reset behavior |
 | `src/utils/validation.ts` | Checks if the workflow is valid |
 | `src/data/nodeTemplates.ts` | Defines the available node templates |
 | `src/data/workflowTemplates.ts` | Defines ready-made HR workflow templates |
@@ -168,7 +195,7 @@ src/
 
 There is no real backend server. The app uses fake API functions so the prototype works by itself.
 
-The fake API supports:
+The fake API lives in `src/api/mockWorkflowApi.ts` and exposes endpoint-style contracts for:
 
 ```text
 GET /automations
@@ -189,7 +216,7 @@ And:
 POST /simulate
 ```
 
-This accepts the workflow JSON and returns a fake execution result.
+This accepts the workflow JSON and returns a fake step-by-step execution result with a run id, validation errors, execution steps, skipped approval branches, and a summary.
 
 ## Design Choices
 
@@ -203,7 +230,7 @@ This accepts the workflow JSON and returns a fake execution result.
 
 ## Personal Design Decisions
 
-I kept the first screen as the actual workflow editor instead of making a landing page. For this type of assignment, I felt it was more useful if the reviewer could open the project and immediately test the main feature.
+I kept the first screen focused on workflow selection instead of making a marketing landing page. From there, the reviewer can immediately open a saved workflow, start from scratch, or load a complete HR template.
 
 I added a sample onboarding workflow by default. An empty canvas can feel confusing at first, so the sample workflow helps show how Start, Task, Approval, Automation, and End nodes are supposed to work together.
 
@@ -217,12 +244,32 @@ I also added validation messages on the canvas because mistakes are easier to fi
 
 If I had more time, I would improve these parts:
 
-- Expand the sidebar pages into full modules. Right now Compliance, Scheduler, Analytics, Integrations, Repository, Workflows, Members, Inbox, Messages, Settings, and Help are simple placeholder pages. In the future I would add real tables, filters, actions, and connected data for each one.
+- Expand the sidebar pages into full modules. Right now Compliance, Scheduler, Analytics, Integrations, Repository, Workflows, Members, Inbox, Messages, Settings, and Help are intentionally lightweight future modules. In the future I would add real tables, filters, actions, and connected data for each one.
 - Add better auto-layout for large workflows.
 - Add deeper node version history with rollback.
 - Add a real backend for shared workflow storage.
 - Add role-based permissions.
 - Add more advanced conditional branching rules.
+
+## Completed vs Future Work
+
+Completed in this prototype:
+
+- React Flow canvas with custom Start, Task, Approval, Automated Step, and End nodes.
+- Drag-and-drop node creation, edge connections, node/edge selection, deletion, mini-map, zoom controls, and auto-layout.
+- Node configuration forms with controlled inputs, required fields, dynamic automation parameters, key-value editors, and node version history.
+- Mock API layer for `GET /automations` and `POST /simulate`.
+- Workflow sandbox that serializes the graph, validates structure, sends the payload to the mock simulation API, and displays a step-by-step execution log.
+- Workflow validation for missing Start or End nodes, disconnected nodes, invalid Start placement, cycles, missing task titles, and missing automation actions.
+- JSON import/export, browser autosave, ready-made HR workflow templates, and validation errors shown directly on nodes.
+
+Future work with more time:
+
+- Replace browser-only persistence with a real backend and shared workflow storage.
+- Add permissions for HR admins, approvers, and workflow viewers.
+- Support richer conditional logic, parallel branches, retry rules, and escalation timers.
+- Add collaboration features such as comments, approvals, and publish/version states.
+- Expand the lightweight sidebar modules into real HR operations screens.
 
 ## Project Status
 

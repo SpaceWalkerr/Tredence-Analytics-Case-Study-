@@ -1,12 +1,18 @@
 import type {
   ApprovalOutcome,
   AutomationDefinition,
+  SimulationRequest,
   SimulationResult,
   SimulationStep,
   WorkflowEdge,
   WorkflowNode,
 } from '../types/workflow';
 import { validateWorkflow } from '../utils/validation';
+
+export const MOCK_API_ENDPOINTS = {
+  automations: 'GET /automations',
+  simulate: 'POST /simulate',
+} as const;
 
 const automations: AutomationDefinition[] = [
   { id: 'send_email', label: 'Send Email', params: ['to', 'subject'] },
@@ -15,18 +21,16 @@ const automations: AutomationDefinition[] = [
   { id: 'notify_slack', label: 'Notify Slack Channel', params: ['channel', 'message'] },
 ];
 
-const delay = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => globalThis.setTimeout(resolve, ms));
 
+// GET /automations
 export async function getAutomations(): Promise<AutomationDefinition[]> {
   await delay(250);
   return automations;
 }
 
-export async function simulateWorkflow(payload: {
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
-  approvalOutcome?: ApprovalOutcome;
-}): Promise<SimulationResult> {
+// POST /simulate
+export async function simulateWorkflow(payload: SimulationRequest): Promise<SimulationResult> {
   await delay(550);
   const validation = validateWorkflow(payload.nodes, payload.edges);
 
@@ -152,7 +156,7 @@ function ownerFor(node: WorkflowNode) {
     case 'approval':
       return node.data.approverRole;
     case 'automation':
-      return 'SpaceWalker automation';
+      return 'HR automation';
     case 'end':
       return 'Workflow archive';
   }

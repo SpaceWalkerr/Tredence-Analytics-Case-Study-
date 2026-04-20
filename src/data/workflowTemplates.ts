@@ -114,7 +114,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
       { id: 'it-ticket', type: 'automation', x: 920, y: 80, data: automation('Create IT provisioning ticket', 'create_ticket', { queue: 'IT onboarding', priority: 'High' }) },
       { id: 'payroll', type: 'task', x: 920, y: 250, data: task('Setup payroll and benefits', 'Payroll specialist', 'Configure salary, tax details, benefits, and statutory deductions.') },
       { id: 'access', type: 'automation', x: 920, y: 430, data: automation('Notify access team', 'notify_slack', { channel: '#it-access', message: 'Provision accounts for new hire' }) },
-      { id: 'welcome', type: 'automation', x: 1230, y: 170, data: automation('Send welcome pack', 'send_email', { to: 'employee.email', subject: 'Welcome to SpaceWalker' }) },
+      { id: 'welcome', type: 'automation', x: 1230, y: 170, data: automation('Send welcome pack', 'send_email', { to: 'employee.email', subject: 'Welcome to the team' }) },
       { id: 'orientation', type: 'task', x: 1230, y: 360, data: task('Schedule orientation', 'L&D coordinator', 'Book orientation, buddy assignment, and first-week agenda.') },
       { id: 'end', type: 'end', x: 1540, y: 260, data: end('Employee onboarding completed') },
     ],

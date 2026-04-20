@@ -87,6 +87,13 @@ export type SerializedWorkflow = {
   exportedAt: string;
 };
 
+export type SimulationRequest = {
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+  approvalOutcome?: ApprovalOutcome;
+  workflowName?: string;
+};
+
 export type SimulationStep = {
   nodeId: string;
   nodeType: WorkflowNodeType;

@@ -68,7 +68,7 @@ export function SimplePage({ page }: Props) {
   return (
     <main className="simple-page">
       <section className="simple-page-hero">
-        <p className="section-label">SpaceWalker Module</p>
+        <p className="section-label">HR Workflow Module</p>
         <h1>{copy.title}</h1>
         <p>{copy.subtitle}</p>
         <div className="simple-page-metrics">
@@ -83,7 +83,7 @@ export function SimplePage({ page }: Props) {
           <article className="simple-card" key={card}>
             <span>{String(index + 1).padStart(2, '0')}</span>
             <strong>{card}</strong>
-            <p>This is a lightweight placeholder page for the case-study prototype.</p>
+            <p>This module is intentionally scoped for future expansion.</p>
           </article>
         ))}
       </section>

@@ -33,8 +33,8 @@ import { WorkflowNodeCard } from './components/WorkflowNodeCard';
 import { templateByType } from './data/nodeTemplates';
 import { cloneWorkflow, defaultWorkflowTemplate, workflowTemplates } from './data/workflowTemplates';
 import { useAutomations } from './hooks/useAutomations';
-import { simulateWorkflow } from './api/mockWorkflowApi';
-import type { ApprovalOutcome, SerializedWorkflow, SimulationResult, WorkflowEdge, WorkflowNode, WorkflowNodeData, WorkflowNodeType } from './types/workflow';
+import { useWorkflowSimulation } from './hooks/useWorkflowSimulation';
+import type { SerializedWorkflow, WorkflowEdge, WorkflowNode, WorkflowNodeData, WorkflowNodeType } from './types/workflow';
 import { validateWorkflow } from './utils/validation';
 
 const nodeTypes: NodeTypes = {
@@ -97,9 +97,14 @@ function WorkflowDesigner() {
   const [history, setHistory] = useState<Array<{ nodes: WorkflowNode[]; edges: WorkflowEdge[] }>>([]);
   const [future, setFuture] = useState<Array<{ nodes: WorkflowNode[]; edges: WorkflowEdge[] }>>([]);
   const [sandboxOpen, setSandboxOpen] = useState(false);
-  const [simulation, setSimulation] = useState<SimulationResult>();
-  const [isRunning, setIsRunning] = useState(false);
-  const [approvalOutcome, setApprovalOutcome] = useState<ApprovalOutcome>('approved');
+  const {
+    approvalOutcome,
+    isRunning,
+    resetSimulation,
+    runSimulation: runWorkflowSimulation,
+    setApprovalOutcome,
+    simulation,
+  } = useWorkflowSimulation();
   const [loadingMessage, setLoadingMessage] = useState<string>();
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<string>();
@@ -261,10 +266,7 @@ function WorkflowDesigner() {
 
   const runSimulation = async () => {
     setSandboxOpen(true);
-    setIsRunning(true);
-    const result = await simulateWorkflow({ nodes, edges, approvalOutcome });
-    setSimulation(result);
-    setIsRunning(false);
+    await runWorkflowSimulation({ nodes, edges, approvalOutcome, workflowName });
   };
 
   const undo = () => {
@@ -314,7 +316,7 @@ function WorkflowDesigner() {
     setWorkflowName(template.name);
     setSelectedNodeId(undefined);
     setSelectedEdgeId(undefined);
-    setSimulation(undefined);
+    resetSimulation();
     setView('designer');
   };
 
@@ -346,7 +348,7 @@ function WorkflowDesigner() {
     setWorkflowName('Untitled Workflow');
     setSelectedNodeId(undefined);
     setSelectedEdgeId(undefined);
-    setSimulation(undefined);
+    resetSimulation();
     setView('designer');
   };
 
@@ -466,7 +468,6 @@ function WorkflowDesigner() {
 
   const taskCount = nodes.filter((node) => node.data.type === 'task').length;
   const automationCount = nodes.filter((node) => node.data.type === 'automation').length;
-  const approvalCount = nodes.filter((node) => node.data.type === 'approval').length;
   const endCount = nodes.filter((node) => node.data.type === 'end').length;
   const totalNodes = nodes.length;
   const actionableNodeCount = nodes.filter((node) => node.data.type !== 'start' && node.data.type !== 'end').length;
@@ -684,13 +685,14 @@ function WorkflowDesigner() {
         edges={edges}
         isOpen={sandboxOpen}
         isRunning={isRunning}
-        nodes={nodesWithValidation}
+        nodes={nodes}
         onClose={() => setSandboxOpen(false)}
         onOutcomeChange={setApprovalOutcome}
         onRun={runSimulation}
         outcome={approvalOutcome}
         result={simulation}
         validationErrors={validation.errors}
+        workflowName={workflowName}
       />
     </div>
   );
@@ -754,7 +756,7 @@ function slugify(value: string) {
 }
 
 function nodeOwnerLabel(data: WorkflowNodeData) {
-  if (data.type === 'task') return data.assignee || 'People Ops team';
+  if (data.type === 'task') return data.assignee || 'HR team';
   if (data.type === 'approval') return `${data.approverRole} approval`;
   if (data.type === 'automation') return 'System automation';
   if (data.type === 'start') return 'Workflow trigger';

@@ -1,14 +1,11 @@
 import {
   ArrowRight,
-  CheckCircle2,
-  Clock3,
   FileClock,
-  GitBranch,
   PlusCircle,
-  ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 import { workflowTemplates } from '../data/workflowTemplates';
+import MountainVistaParallax from './ui/mountain-vista-bg';
 
 type Props = {
   hasSavedWorkflow: boolean;
@@ -17,48 +14,32 @@ type Props = {
   onSelectTemplate: (templateId: string) => void;
 };
 
+const cardAccents = ['teal', 'amber', 'red', 'indigo'];
+
+
 export function WorkflowDashboard({ hasSavedWorkflow, onCreateBlank, onOpenSaved, onSelectTemplate }: Props) {
   return (
     <main className="dashboard-screen">
       <section className="dashboard-hero">
+        <MountainVistaParallax />
         <div className="dashboard-hero-copy">
-          <div className="brand">
-            <div className="brand-mark">SW</div>
-            <div>
-              <strong>SpaceWalker</strong>
-              <span>HR Workflow Studio</span>
-            </div>
-          </div>
-          <div className="premium-eyebrow">
+          <div className="hero-eyebrow">
             <Sparkles size={14} />
-            Enterprise workflow orchestration
+            Visual workflow canvas
           </div>
           <div>
-            <h1>Build powerful HR workflows with precision.</h1>
-            <p className="dashboard-tagline">A modern platform for designing, validating, and simulating enterprise HR processes—no coding required.</p>
+            <h1>Build HR workflows that are ready to run.</h1>
+            <p className="dashboard-tagline">
+              Design onboarding, leave approval, document verification, and internal service flows on a visual canvas.
+            </p>
           </div>
           <p>
-            Start from a realistic HR process, customize every node, validate branches, and simulate approvals before exporting
-            the workflow.
+            Configure every node, validate the structure, and test the path in a sandbox before sharing the workflow.
           </p>
-          <div className="dashboard-stats">
-            <span>
-              <strong>4</strong>
-              Ready templates
-            </span>
-            <span>
-              <strong>12</strong>
-              Steps per flow
-            </span>
-            <span>
-              <strong>3</strong>
-              Approval paths
-            </span>
-          </div>
           <div className="dashboard-actions">
             <button className="primary-button" type="button" onClick={onCreateBlank}>
               <PlusCircle size={16} />
-              Create New Workflow
+              Create From Scratch
             </button>
             {hasSavedWorkflow ? (
               <button className="ghost-button" type="button" onClick={onOpenSaved}>
@@ -68,36 +49,6 @@ export function WorkflowDashboard({ hasSavedWorkflow, onCreateBlank, onOpenSaved
             ) : null}
           </div>
         </div>
-
-        <aside className="dashboard-command-card">
-          <div className="command-card-header">
-            <div>
-              <p className="section-label">Live Command Center</p>
-              <h2>Workflow readiness</h2>
-            </div>
-            <span>Live</span>
-          </div>
-          <div className="readiness-meter">
-            <span style={{ width: '82%' }} />
-          </div>
-          <div className="command-metrics">
-            <div>
-              <ShieldCheck size={18} />
-              <strong>Validated</strong>
-              <p>Rules, paths, and required fields</p>
-            </div>
-            <div>
-              <GitBranch size={18} />
-              <strong>Branch-aware</strong>
-              <p>Approved, rejected, correction</p>
-            </div>
-            <div>
-              <Clock3 size={18} />
-              <strong>Simulated</strong>
-              <p>Owners, timing, skipped paths</p>
-            </div>
-          </div>
-        </aside>
       </section>
 
       <div className="dashboard-section-title">
@@ -105,44 +56,36 @@ export function WorkflowDashboard({ hasSavedWorkflow, onCreateBlank, onOpenSaved
           <p className="section-label">Workflow Library</p>
           <h2>Choose a starting point</h2>
         </div>
-        <span>{workflowTemplates.length} templates + blank canvas</span>
       </div>
 
       <section className="workflow-grid">
         <button className="workflow-list-card workflow-list-card--blank" type="button" onClick={onCreateBlank}>
-          <div className="card-icon card-icon--blank">
-            <PlusCircle size={18} />
-          </div>
-          <span>Create From Scratch</span>
-          <p>Start with an empty canvas and build your own workflow using Start, Task, Approval, Automation, and End nodes.</p>
-          <div className="template-meta">
-            <span>Custom</span>
-            <span>All nodes</span>
-          </div>
-          <strong>
+          <strong className="workflow-card-title">Create From Scratch</strong>
+          <p>Start with an empty canvas and build your workflow using Start, Task, Approval, Automation, and End nodes.</p>
+          <span className="workflow-card-action">
             New blank workflow
             <PlusCircle size={15} />
-          </strong>
+          </span>
         </button>
-        {workflowTemplates.map((template, index) => (
-          <button className="workflow-list-card" key={template.id} type="button" onClick={() => onSelectTemplate(template.id)}>
-            <div className="card-icon">
-              <CheckCircle2 size={18} />
-            </div>
-            <span>{template.name}</span>
-            <p>{template.description}</p>
-            <div className="template-meta">
-              <span>{template.nodes.length} steps</span>
-              <span>{index + 2} approvals</span>
-            </div>
-            <strong>
-              Open template
-              <ArrowRight size={15} />
-            </strong>
-          </button>
-        ))}
+        {workflowTemplates.map((template, index) => {
+          const accent = cardAccents[index] ?? cardAccents[0];
+          return (
+            <button
+              className={`workflow-list-card workflow-list-card--${accent}`}
+              key={template.id}
+              type="button"
+              onClick={() => onSelectTemplate(template.id)}
+            >
+              <strong className="workflow-card-title">{template.name}</strong>
+              <p>{template.description}</p>
+              <span className="workflow-card-action">
+                Open template
+                <ArrowRight size={15} />
+              </span>
+            </button>
+          );
+        })}
       </section>
-
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import { CheckCircle2, Loader2, X } from 'lucide-react';
-import type { ApprovalOutcome, SimulationResult, WorkflowEdge, WorkflowNode } from '../types/workflow';
+import { MOCK_API_ENDPOINTS } from '../api/mockWorkflowApi';
+import type { ApprovalOutcome, SimulationRequest, SimulationResult, WorkflowEdge, WorkflowNode } from '../types/workflow';
 
 type Props = {
   edges: WorkflowEdge[];
@@ -12,6 +13,7 @@ type Props = {
   outcome: ApprovalOutcome;
   result?: SimulationResult;
   validationErrors: string[];
+  workflowName: string;
 };
 
 export function SandboxPanel({
@@ -25,10 +27,17 @@ export function SandboxPanel({
   outcome,
   result,
   validationErrors,
+  workflowName,
 }: Props) {
   if (!isOpen) return null;
 
-  const serialized = JSON.stringify({ nodes, edges }, null, 2);
+  const requestPayload: SimulationRequest = {
+    workflowName,
+    approvalOutcome: outcome,
+    nodes,
+    edges,
+  };
+  const serialized = JSON.stringify(requestPayload, null, 2);
 
   return (
     <div className="sandbox">
@@ -99,7 +108,7 @@ export function SandboxPanel({
       ) : null}
 
       <section className="json-preview">
-        <p className="section-label">Serialized Graph</p>
+        <p className="section-label">{MOCK_API_ENDPOINTS.simulate} Payload</p>
         <pre>{serialized}</pre>
       </section>
     </div>

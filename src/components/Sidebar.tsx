@@ -42,9 +42,9 @@ export function Sidebar({ activePage, onExport, onImport, onNavigate }: Props) {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-mark">SW</div>
+        <div className="brand-mark">HR</div>
         <div>
-          <strong>SpaceWalker</strong>
+          <strong>HR Workflow Designer</strong>
           <span>Workflow OS</span>
         </div>
       </div>

@@ -52,7 +52,7 @@ describe('validateWorkflow', () => {
     const nodes = [makeNode('start', 'start'), makeNode('task', 'task'), makeNode('end', 'end')];
     const result = validateWorkflow(nodes, [edge('task', 'start'), edge('start', 'end')]);
 
-    expect(result.nodeErrors.start).toContain('Start node cannot have incoming connections.');
+    expect(result.nodeErrors.start).toContain('Start node must be the first step and cannot have incoming connections.');
   });
 
   it('requires incoming connections for non-Start nodes', () => {
