@@ -10,9 +10,11 @@ Start -> Collect Documents -> Manager Approval -> Send Email -> End
 
 The app is built with **React**, **TypeScript**, **Vite**, and **React Flow**.
 
-## Screenshots
+## Live Demo
 
-Add screenshots to `docs/screenshots/` before submitting.
+https://tredence-analytics-case-study.vercel.app/
+
+## Screenshots
 
 ### Dashboard
 ![Dashboard](docs/screenshots/dashboard.png)
